@@ -119,6 +119,10 @@ class Spider implements Runnable{
 			}
 		}catch(Throwable e){
 			System.out.println("Problem searching in blackListDomains: "+e.getMessage());
+			if(url == null){
+				System.out.println("Url was null, problem resolved");
+				return true;
+			}
 			System.out.println("*INFO* Name: "+name+" size of blackListDomains: "+blackListDomains.size()+" URL searching: "+url);
 			System.out.println("Trying one more time...");
 			for(String blackURL:blackListDomains){//checks if URL is blacklisted
