@@ -33,9 +33,15 @@ class Spider implements Runnable{
 
 		do{
 			try{
-				nextURL = Spider.pagesToVisit.remove(0);//get next URL in lis
+				nextURL = Spider.pagesToVisit.remove(0);//get next URL in list
 			}catch(Throwable e){
-				return null;
+				System.out.println("Problem removing link from pagesToVisit: "+e.getMessage());
+				try{
+					nextURL = Spider.pagesToVisit.remove(0);//get next URL in list
+				}catch(Throwable k){
+					System.out.println("Problem removing link from pagesToVisit, returning null");
+					return null;
+				}
 			}
 			//System.out.println("check");
 		}while((black && badURL(nextURL)) || (!black && !goodURL(nextURL)));//loop through list until we find a good URL
@@ -166,14 +172,14 @@ class Spider implements Runnable{
 
 	public boolean searchDomains(String new_url){
 		try{
-			for(String URL:pagesVisited){//checks if URL is blacklisted
+			for(String URL:pagesVisited){//checks if URL is part of a domain already crawled
 				if(URL.replaceAll("//", " ").replaceAll("/.*", " ").contains(new_url.replaceAll("//", " ").replaceAll("/.*", " "))){
 					return true;
 				}
 			}
 		}catch(Throwable e){
 			System.out.println("Problem in search domain: "+e.getMessage());
-			for(String URL:pagesVisited){//checks if URL is blacklisted
+			for(String URL:pagesVisited){//tries one more time
 				if(URL.replaceAll("//", " ").replaceAll("/.*", " ").contains(new_url.replaceAll("//", " ").replaceAll("/.*", " "))){
 					return true;
 				}
