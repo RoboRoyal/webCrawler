@@ -85,7 +85,7 @@ class Spider implements Runnable{
 				if(pagesVisited.size()<Max_Pages){
 					System.out.println("Trying to get next url again...");
 					try{
-						Thread.sleep(12);
+						pagesToVisit.set(0, pagesToVisit.remove(1));
 						currentURL = getNextURL();
 						if(currentURL == null){
 							throw new EOFException();
