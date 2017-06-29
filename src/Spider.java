@@ -81,6 +81,20 @@ class Spider implements Runnable{
 				}*/
 			}
 			if(currentURL == null){
+				System.out.println("Received a null URL from getNextURL()");
+				if(pagesVisited.size()<Max_Pages){
+					System.out.println("Trying to get next url again...");
+					try{
+						Thread.sleep(12);
+						currentURL = getNextURL();
+						if(currentURL == null){
+							throw new EOFException();
+						}
+						System.out.println("Success! Got next URL");
+					}catch(Throwable l){
+						System.out.println("This is: "+name+" and I have failed you. I am sorry.");
+					}	
+				}
 				break;
 			}
 			//System.out.println("This is: "+name);
