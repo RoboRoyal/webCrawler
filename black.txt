@@ -1,0 +1,6 @@
+docs.atlassian.com
+atlassian.com
+ sourcetreeapp.com
+apache.org
+ gnu.org
+jfree.org
