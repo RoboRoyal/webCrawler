@@ -8,6 +8,7 @@ class Spider implements Runnable{
 	//private Set<String> problemSites = new HashSet<String>();
 	private static Set<String> blackListDomains = new HashSet<String>();
 	private static Set<String> whiteListDomains = new HashSet<String>();
+	private boolean doDomainSearch = false;
 	private int problems;
 	private int success;
 	private boolean black = true;
@@ -97,7 +98,7 @@ class Spider implements Runnable{
 	}
 	
 	public boolean badURL(String url){
-		if(this.searchDomains(url)){return true;}
+		
 		if(pagesVisited.contains(url)){//checks if this site has been visited before
 			return true;
 		}
@@ -109,6 +110,7 @@ class Spider implements Runnable{
 				return true;
 			}
 		}
+		if(this.doDomainSearch && this.searchDomains(url)){return true;}
 		return false;
 	}
 	
