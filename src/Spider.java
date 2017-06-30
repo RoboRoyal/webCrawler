@@ -189,15 +189,23 @@ public boolean badURL(String url){
 	}
 
 	public boolean searchDomains(String new_url){
-		//try{
+		try{
 			for(String URL:pagesVisited){//checks if URL is blacklisted
 				if(URL.replaceAll("//", " ").replaceAll("/.*", " ").contains(new_url.replaceAll("//", " ").replaceAll("/.*", " "))){
 					return true;
 				}
 			}
-		/*}catch(Throwable e){
+		}catch(Throwable e){
 			System.out.println("Problem in search domain: "+e.getMessage());
-		}*/
+			try{
+				for(String URL:pagesVisited){//checks if URL is blacklisted
+					if(URL.replaceAll("//", " ").replaceAll("/.*", " ").contains(new_url.replaceAll("//", " ").replaceAll("/.*", " "))){
+						return true;
+					}
+				}
+			}catch(Throwable lkl){System.out.println("Problem in search domain: "+lkl.getMessage()); return true;}
+			
+		}
 			
 		return false;
 	}
