@@ -1,3 +1,4 @@
+import java.io.EOFException;
 import java.util.*;
 
 
@@ -9,12 +10,13 @@ class Spider implements Runnable{
 	private static Set<String> blackListDomains = new HashSet<String>();
 	private static Set<String> whiteListDomains = new HashSet<String>();
 	private boolean doDomainSearch = false;
+	
 	private int problems;
 	private int success;
 	private boolean black = true;
 	private Thread t;
 	private String name;
-	
+
 	public Spider(){
 		problems = 0;
 		success = 0;
@@ -25,8 +27,6 @@ class Spider implements Runnable{
 		success = 0;
 		name=i;
 	}
-	
-	
 	
 	private String getNextURL(){//looks through the list of urls found and selects the next valid one
 		String nextURL;
@@ -39,7 +39,7 @@ class Spider implements Runnable{
 				try{
 					nextURL = Spider.pagesToVisit.remove(0);//get next URL in list
 				}catch(Throwable k){
-					System.out.println("Problem removing link from pagesToVisit, returning null");
+					//System.out.println("Problem removing link from pagesToVisit, returning null");
 					return null;
 				}
 			}
@@ -65,15 +65,14 @@ class Spider implements Runnable{
 				break;
 			}else{
 
-				currentURL = getNextURL();
-
+					currentURL = getNextURL();
 			}
 			if(currentURL == null){
 				System.out.println("Received a null URL from getNextURL()");
 				if(pagesVisited.size()<Max_Pages){
 					System.out.println("Trying to get next url again...");
 					try{
-						pagesToVisit.set(0, pagesToVisit.remove(1));
+						try{this.copy();}catch(Throwable lkl){System.out.println("Cant do that$$$$$$$$$$: "+lkl.getMessage());}
 						currentURL = getNextURL();
 						if(currentURL == null){
 							throw new EOFException();
@@ -90,9 +89,10 @@ class Spider implements Runnable{
 			if(leg.crawl(currentURL)){
 				try{
 					pagesToVisit.addAll(leg.getLinks());
+
 				}catch(Throwable k){
 					try {
-						Thread.sleep(2);
+						Thread.sleep(12);
 					} catch (InterruptedException e) {};
 					System.out.println("Problem adding links, trying again");
 					pagesToVisit.addAll(leg.getLinks());
@@ -105,7 +105,7 @@ class Spider implements Runnable{
 		System.out.println("\n\t***Finished Crawling***\n\nVisited "+pagesVisited.size()+" web pages with an additional "+pagesToVisit.size()+" links found.");
 	}
 	
-	public boolean badURL(String url){
+public boolean badURL(String url){
 		
 		if(pagesVisited.contains(url)){//checks if this site has been visited before
 			return true;
@@ -182,39 +182,66 @@ class Spider implements Runnable{
 	}
 
 	public void start(){
-		if(t==null){
-			t = new Thread(this,name);
-			t.start();
-		}
+			if(t==null){
+				t = new Thread(this,name);
+				t.start();
+			}
 	}
 
 	public boolean searchDomains(String new_url){
-		try{
-			for(String URL:pagesVisited){//checks if URL is part of a domain already crawled
+		//try{
+			for(String URL:pagesVisited){//checks if URL is blacklisted
 				if(URL.replaceAll("//", " ").replaceAll("/.*", " ").contains(new_url.replaceAll("//", " ").replaceAll("/.*", " "))){
 					return true;
 				}
 			}
-		}catch(Throwable e){
+		/*}catch(Throwable e){
 			System.out.println("Problem in search domain: "+e.getMessage());
-			for(String URL:pagesVisited){//tries one more time
-				if(URL.replaceAll("//", " ").replaceAll("/.*", " ").contains(new_url.replaceAll("//", " ").replaceAll("/.*", " "))){
-					return true;
-				}
-			}
-		}
+		}*/
 			
 		return false;
 	}
 
 	@Override
 	public void run() {
-		crawlInternet();
+		try{
+			crawlInternet();
+			if(pagesVisited.size()<Max_Pages && pagesToVisit.size()>1){
+				throw new Exception("Missed number of pages");
+			}
+		}catch(Throwable lkl){
+				System.out.println("Problem with thread "+name+": "+lkl.getMessage());
+				copy();
+				System.out.println("Attempting to restart....");
+				crawlInternet();
+		}
 		
 		
 	}
 	public Thread getT(){
 		return t;
 	}
+	
+	private boolean copy(){
+		List<String> tmp = new LinkedList<String>();
+		System.out.println("Size of pages: "+pagesToVisit.size());
+		if(pagesToVisit.size()<8){
+			return false;
+		}
+		try{
+			for(int x = pagesToVisit.size()-2;x>5;x--){
+				tmp.add(pagesToVisit.get(x));
+			}
+		}catch(Throwable lkl){
+			pagesToVisit.clear();
+		}
+		pagesToVisit=tmp;
+		System.out.println("Copied: "+pagesToVisit.size());
+		System.out.println("Now testing...");
+		System.out.println(pagesToVisit.remove(0).toString());
+		System.out.println("If you see this, it worked, congrats!");
+		return true;
+	}
+	
 	
 }
