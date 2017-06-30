@@ -4,7 +4,7 @@ import java.util.*;
 class Spider implements Runnable{
 	private static int Max_Pages = 20;
 	private static Set<String> pagesVisited = new HashSet<String>();
-	private static List<String> pagesToVisit = new LinkedList<String>();
+	private static List<String> pagesToVisit = Collections.synchronizedList(new LinkedList<String>());
 	//private Set<String> problemSites = new HashSet<String>();
 	private static Set<String> blackListDomains = new HashSet<String>();
 	private static Set<String> whiteListDomains = new HashSet<String>();
@@ -64,21 +64,9 @@ class Spider implements Runnable{
 				System.out.println("Out of URLS to crawl, ending thread "+this.name);
 				break;
 			}else{
-				//try{
-					currentURL = getNextURL();
-				/*}catch(Throwable k){
-					currentURL=null;
-					System.out.println("Error trying to get next URL, ["+k.getMessage()+"] trying again");
-					while(pagesToVisit.size()>1){
-						try{
-							try{
-								Thread.sleep(2);
-								currentURL = getNextURL();
-								System.out.println("Success! Got next URL");
-							}catch(Throwable l){};	
-						}catch(Throwable q){};
-					}
-				}*/
+
+				currentURL = getNextURL();
+
 			}
 			if(currentURL == null){
 				System.out.println("Received a null URL from getNextURL()");
@@ -194,10 +182,10 @@ class Spider implements Runnable{
 	}
 
 	public void start(){
-			if(t==null){
-				t = new Thread(this,name);
-				t.start();
-			}
+		if(t==null){
+			t = new Thread(this,name);
+			t.start();
+		}
 	}
 
 	public boolean searchDomains(String new_url){
