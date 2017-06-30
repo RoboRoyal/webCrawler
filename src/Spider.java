@@ -1,4 +1,4 @@
-import java.io.EOFException;
+//import java.io.EOFException;
 import java.util.*;
 
 
@@ -32,9 +32,9 @@ class Spider implements Runnable{
 		String nextURL;
 
 		do{
-			try{
+			//try{
 				nextURL = Spider.pagesToVisit.remove(0);//get next URL in list
-			}catch(Throwable e){
+			/*}catch(Throwable e){
 				System.out.println("Problem removing link from pagesToVisit: "+e.getMessage());
 				try{
 					nextURL = Spider.pagesToVisit.remove(0);//get next URL in list
@@ -42,7 +42,7 @@ class Spider implements Runnable{
 					//System.out.println("Problem removing link from pagesToVisit, returning null");
 					return null;
 				}
-			}
+			}*/
 			//System.out.println("check");
 		}while((black && badURL(nextURL)) || (!black && !goodURL(nextURL)));//loop through list until we find a good URL
 		pagesVisited.add(nextURL);//add new URL to the set we visited
@@ -67,7 +67,7 @@ class Spider implements Runnable{
 
 					currentURL = getNextURL();
 			}
-			if(currentURL == null){
+			/*if(currentURL == null){
 				System.out.println("Received a null URL from getNextURL()");
 				if(pagesVisited.size()<Max_Pages){
 					System.out.println("Trying to get next url again...");
@@ -83,7 +83,7 @@ class Spider implements Runnable{
 					}	
 				}
 				break;
-			}
+			}*/
 			//System.out.println("This is: "+name);
 
 			if(leg.crawl(currentURL)){
@@ -113,13 +113,13 @@ public boolean badURL(String url){
 		if(url==""){
 			return true;
 		}
-			try{
+			//try{
 			for(String blackURL:blackListDomains){//checks if URL is blacklisted
 				if(url.contains(blackURL)){
 					return true;
 				}
 			}
-		}catch(Throwable e){
+		/*}catch(Throwable e){
 			System.out.println("Problem searching in blackListDomains: "+e.getMessage());
 			if(url == null){
 				System.out.println("Url was null, problem resolved");
@@ -133,7 +133,7 @@ public boolean badURL(String url){
 				}
 			
 			}
-		}
+		}*/
 		if(this.doDomainSearch && this.searchDomains(url)){return true;}
 		return false;
 	}
