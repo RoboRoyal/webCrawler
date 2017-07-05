@@ -43,12 +43,26 @@ public class SpiderTamer {
 	public static boolean writeToFile(Spider p){
 		System.out.println("Writing to file...");
 		String fileOut = "crawledURLS.txt";
+		String mailFile = "foundEmails.txt";
+		
+		for(String line:p.getPagesVisited()){
+			if(line.contains("mailto")){
+				emails.add(line);
+			}
+		}
+		
+		Set<String> emails = new HashSet<String>();
 		try{
 
 			BufferedWriter SpiderJocky = new BufferedWriter(new FileWriter(new File(fileOut)));
 			System.out.println("Attempting to write "+p.getPagesVisited().size()+" links to file...");
 			SpiderJocky.write(p.getPagesVisited().toString().replaceFirst("\\]", " ").replaceAll(",", "\n").replaceFirst("\\[", " "));
 			SpiderJocky.close();
+			
+			BufferedWriter SpiderJocky2 = new BufferedWriter(new FileWriter(new File(mailFile)));
+			System.out.println("Attempting to write "+emails.size()+" emails to file...");
+			SpiderJocky2.write(emails.toString().replaceFirst("\\]", " ").replaceAll(",", "\n").replaceFirst("\\[", " "));
+			SpiderJocky2.close();
 		}catch(IOException e){
 			System.out.println("Problem writing to file: "+e.getMessage());
 			return false;
