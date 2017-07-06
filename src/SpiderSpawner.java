@@ -1,53 +1,46 @@
-import java.util.ArrayList;
+import java.io.IOException;
+import java.util.*;
 
-public class SpiderSpawner {
-	
-	//private static final String start_url = "https://bitbucket.blu";
-	
-	
+import org.jsoup.*;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 
-//remember headphones
-	public static void main(String[] args) throws InterruptedException{
-		int maxPages=20000;
-		int numberOfThreads = 12;
-		System.out.println("Starting webcrawl");
-		if(numberOfThreads<1){
-			System.out.println("Need at least 1 thread");
-		}
-		
-		ArrayList<Spider> spiderArmy = new ArrayList<Spider>();
-		for(int x = 0;x<numberOfThreads;x++){
-			spiderArmy.add(new Spider("Spider-"+x));
-		}
-		if(spiderArmy.get(0) != null){
-			System.out.println("Adding parameters");
-			spiderArmy.get(0).setMax(maxPages);
-			SpiderTamer.fileWhite(spiderArmy.get(0));
-			SpiderTamer.fileBlack(spiderArmy.get(0));
-			SpiderTamer.fileAddLinks(spiderArmy.get(0));
+
+
+public class SpiderLeg {
+	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";//pretend we are using Internet browser
+	private List<String> links = new LinkedList<String>();
+	//private Document htmlDocument;
+	
+
+	public boolean crawl(String url) {//crawls individual web page and saves the links, returns True if successful, False otherwise
+		try{
+			Connection connection = Jsoup.connect(url).userAgent(USER_AGENT);//conect to web page
+			Document htmlDocument = connection.get();//get contents of web page
 			
+			if(!connection.response().contentType().contains("text/html"))//print out if connection failed
+            {
+                System.out.println("**Failure** Retrieved something other than HTML");
+                return false;
+            }
+			
+			Elements linksOnPage = htmlDocument.select(("a[href]"));//get all links from web page
+			for(Element link:linksOnPage){
+				this.links.add(link.absUrl("href"));//save all links in the list
+			}
+		
+		}catch(IOException e){//error handler: prints error
+			return false;
 		}
-		long start_time = System.currentTimeMillis();
-		for(Spider jock:spiderArmy){
-			System.out.println("Starting: "+jock.name);
-			jock.start();
-		}
-		for(Spider jock:spiderArmy){
-			//System.out.println("Waiting....: "+jock.getT().getName());
-			jock.getT().join();
-		}
-		
-
-		
-		
-		//System.out.println(spider.getSuccess()+" Successes and "+spider.getProblem()+" problems");
-		System.out.println("Time: "+(System.currentTimeMillis()-start_time)/1000+" seconds");
-		
-		//System.out.println(spider.getPagesVisited().toString().replaceAll(",", "\n"));
-		SpiderTamer.writeToFile(spiderArmy.get(0));
+		return true;
 		
 	}
 
-	
+	public List<String> getLinks(){//return list of new links
+		return this.links;
+	}
+
+
 }
