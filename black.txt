@@ -1,3 +1,7 @@
+#add in domains to be ignored
+#will only be used if useBlackList is set to true
+#lines that start with "#" will be ignored
+
 docs.atlassian.com
 atlassian.com
  sourcetreeapp.com
