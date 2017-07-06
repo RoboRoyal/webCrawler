@@ -2,7 +2,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Set;
 
 public class SpiderTamer {
 	
@@ -44,19 +46,16 @@ public class SpiderTamer {
 		System.out.println("Writing to file...");
 		String fileOut = "crawledURLS.txt";
 		String mailFile = "foundEmails.txt";
-		
+		Set<String> emails = new HashSet<String>();
 		for(String line:p.getPagesVisited()){
 			if(line.contains("mailto")){
 				emails.add(line);
-			}
-		}
-		
-		Set<String> emails = new HashSet<String>();
+			 }
+		 }
 		try{
-
 			BufferedWriter SpiderJocky = new BufferedWriter(new FileWriter(new File(fileOut)));
 			System.out.println("Attempting to write "+p.getPagesVisited().size()+" links to file...");
-			SpiderJocky.write(p.getPagesVisited().toString().replaceFirst("\\]", " ").replaceAll(",", "\n").replaceFirst("\\[", " "));
+			SpiderJocky.write(p.getPagesVisited().toString().replaceAll("mailto.*"," ").replaceFirst("\\]", " ").replaceAll(",", "\n").replaceFirst("\\[", " "));
 			SpiderJocky.close();
 			
 			BufferedWriter SpiderJocky2 = new BufferedWriter(new FileWriter(new File(mailFile)));
@@ -70,10 +69,11 @@ public class SpiderTamer {
 		System.out.println("Written!");
 		return true;
 	}
+	
 	public static void fileAddLinks(Spider p) {
 		String urlFile = "linksToCrawl.txt";
 		try{
-			Scanner in = new Scanner(new File((urlFile)));
+			Scanner in = new Scanner(new File(urlFile));
 			String line;
 			while(in.hasNextLine()){
 				line = in.nextLine();
@@ -87,5 +87,5 @@ public class SpiderTamer {
 		}
 		
 	}
-
+	
 }
