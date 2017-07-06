@@ -1,46 +1,51 @@
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
 
-import org.jsoup.*;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+public class SpiderSpawner {
 
 
-
-
-public class SpiderLeg {
-	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";//pretend we are using Internet browser
-	private List<String> links = new LinkedList<String>();
-	//private Document htmlDocument;
-	
-
-	public boolean crawl(String url) {//crawls individual web page and saves the links, returns True if successful, False otherwise
-		try{
-			Connection connection = Jsoup.connect(url).userAgent(USER_AGENT);//conect to web page
-			Document htmlDocument = connection.get();//get contents of web page
-			
-			if(!connection.response().contentType().contains("text/html"))//print out if connection failed
-            {
-                System.out.println("**Failure** Retrieved something other than HTML");
-                return false;
-            }
-			
-			Elements linksOnPage = htmlDocument.select(("a[href]"));//get all links from web page
-			for(Element link:linksOnPage){
-				this.links.add(link.absUrl("href"));//save all links in the list
-			}
+	public static void main(String[] args) throws InterruptedException{
+		int maxPages=20000;
+		int numberOfThreads = 200;
 		
-		}catch(IOException e){//error handler: prints error
-			return false;
+		System.out.println("Starting webcrawl");
+		if(numberOfThreads<1){
+			System.out.println("Need at least 1 thread");
+			System.exit(1);
 		}
-		return true;
+		
+		ArrayList<Spider> spiderArmy = new ArrayList<Spider>();//Initializes all the spiders
+		for(int x = 0;x<numberOfThreads;x++){
+			spiderArmy.add(new Spider("Spider-"+x));
+		}
+		
+		if(spiderArmy.get(0) != null){//set parameters for all the threads
+			System.out.println("Adding parameters");
+			spiderArmy.get(0).setMax(maxPages);
+			SpiderTamer.fileWhite(spiderArmy.get(0));
+			SpiderTamer.fileBlack(spiderArmy.get(0));
+			SpiderTamer.fileAddLinks(spiderArmy.get(0));
+			
+		}
+		long start_time = System.currentTimeMillis();//used for measuring time of crawl
+		
+		for(Spider jock:spiderArmy){//starts each thread crawling
+			System.out.println("Starting: "+jock.name);
+			jock.start();
+			jock.getT().setPriority(8);
+			try{
+				Thread.sleep(2);
+			}catch(Throwable e){}
+		}
+		
+		for(Spider jock:spiderArmy){//waits for all threads to finish crawling
+			jock.getT().join();
+		}
+
+		System.out.println("Time: "+(System.currentTimeMillis()-start_time)/1000+" seconds");//print results of crawl
+	
+		SpiderTamer.writeToFile(spiderArmy.get(0));//save results
 		
 	}
 
-	public List<String> getLinks(){//return list of new links
-		return this.links;
-	}
-
-
+	
 }
