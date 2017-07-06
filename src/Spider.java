@@ -1,15 +1,12 @@
-//import java.io.EOFException;
 import java.util.*;
-
 
 class Spider implements Runnable{
 	private static int Max_Pages = 20;
 	private static Set<String> pagesVisited = new HashSet<String>();
 	private static List<String> pagesToVisit = Collections.synchronizedList(new LinkedList<String>());
-	//private Set<String> problemSites = new HashSet<String>();
 	private static Set<String> blackListDomains = new HashSet<String>();
 	private static Set<String> whiteListDomains = new HashSet<String>();
-	private boolean doDomainSearch = false;
+	public boolean doDomainSearch = false;
 	
 	private int problems;
 	private int success;
@@ -52,13 +49,10 @@ class Spider implements Runnable{
 				System.out.println("Out of URLS to crawl, ending thread "+this.name);
 				break;
 			}else{
-
 					currentURL = getNextURL();
 			}
-
 			if(leg.crawl(currentURL)){
 				try{
-
 					for(String newURL:leg.getLinks()){//try to add only new links
 						if(!pagesToVisit.contains(newURL)){
 							pagesToVisit.add(newURL);
@@ -92,7 +86,6 @@ public boolean badURL(String url){//returns if URL givin is a bad one and should
 				return true;
 			}
 		}
-
 		if(this.doDomainSearch && this.searchDomains(url)){return true;}//check to do domain search
 		return false;
 	}
@@ -180,9 +173,8 @@ public boolean badURL(String url){//returns if URL givin is a bad one and should
 				System.out.println("Attempting to restart....");
 				crawlInternet();
 		}
-		
-		
 	}
+	
 	public Thread getT(){//get the thread
 		return t;
 	}
