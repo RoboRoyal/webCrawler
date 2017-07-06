@@ -15,14 +15,14 @@ class Spider implements Runnable{
 	private int success;
 	private boolean black = true;
 	private Thread t;
-	private String name;
+	public String name;
 
 	public Spider(){
 		problems = 0;
 		success = 0;
 		name="demo";
 	}
-	public Spider(String i){
+	public Spider(String i){//takes in name to set thread as
 		problems = 0;
 		success = 0;
 		name=i;
@@ -32,18 +32,7 @@ class Spider implements Runnable{
 		String nextURL;
 
 		do{
-			//try{
 				nextURL = Spider.pagesToVisit.remove(0);//get next URL in list
-			/*}catch(Throwable e){
-				System.out.println("Problem removing link from pagesToVisit: "+e.getMessage());
-				try{
-					nextURL = Spider.pagesToVisit.remove(0);//get next URL in list
-				}catch(Throwable k){
-					//System.out.println("Problem removing link from pagesToVisit, returning null");
-					return null;
-				}
-			}*/
-			//System.out.println("check");
 		}while((black && badURL(nextURL)) || (!black && !goodURL(nextURL)));//loop through list until we find a good URL
 		pagesVisited.add(nextURL);//add new URL to the set we visited
 		return nextURL;
@@ -51,7 +40,6 @@ class Spider implements Runnable{
 	
 	public void startTraffic(String url){//initiates crawl
 		pagesToVisit.add(url);
-		//crawlInternet();
 		run();
 		
 	}
@@ -67,35 +55,21 @@ class Spider implements Runnable{
 
 					currentURL = getNextURL();
 			}
-			/*if(currentURL == null){
-				System.out.println("Received a null URL from getNextURL()");
-				if(pagesVisited.size()<Max_Pages){
-					System.out.println("Trying to get next url again...");
-					try{
-						try{this.copy();}catch(Throwable lkl){System.out.println("Cant do that$$$$$$$$$$: "+lkl.getMessage());}
-						currentURL = getNextURL();
-						if(currentURL == null){
-							throw new EOFException();
-						}
-						System.out.println("Success! Got next URL");
-					}catch(Throwable l){
-						System.out.println("This is: "+name+" and I have failed you. I am sorry.");
-					}	
-				}
-				break;
-			}*/
-			//System.out.println("This is: "+name);
 
 			if(leg.crawl(currentURL)){
 				try{
-					pagesToVisit.addAll(leg.getLinks());
 
+					for(String newURL:leg.getLinks()){//try to add only new links
+						if(!pagesToVisit.contains(newURL)){
+							pagesToVisit.add(newURL);
+						}
+					}
 				}catch(Throwable k){
 					try {
 						Thread.sleep(12);
 					} catch (InterruptedException e) {};
-					System.out.println("Problem adding links, trying again");
-					pagesToVisit.addAll(leg.getLinks());
+					System.out.println("Problem adding links: "+k.getMessage());
+					pagesToVisit.addAll(leg.getLinks());//force add all links
 				}
 				success++;
 			}else{
@@ -105,7 +79,7 @@ class Spider implements Runnable{
 		System.out.println("\n\t***Finished Crawling***\n\nVisited "+pagesVisited.size()+" web pages with an additional "+pagesToVisit.size()+" links found.");
 	}
 	
-public boolean badURL(String url){
+public boolean badURL(String url){//returns if URL givin is a bad one and should be ignored
 		
 		if(pagesVisited.contains(url)){//checks if this site has been visited before
 			return true;
@@ -113,32 +87,17 @@ public boolean badURL(String url){
 		if(url==""){
 			return true;
 		}
-			//try{
-			for(String blackURL:blackListDomains){//checks if URL is blacklisted
-				if(url.contains(blackURL)){
-					return true;
-				}
-			}
-		/*}catch(Throwable e){
-			System.out.println("Problem searching in blackListDomains: "+e.getMessage());
-			if(url == null){
-				System.out.println("Url was null, problem resolved");
+		for(String blackURL:blackListDomains){//checks if URL is blacklisted
+			if(url.contains(blackURL)){
 				return true;
 			}
-			System.out.println("*INFO* Name: "+name+" size of blackListDomains: "+blackListDomains.size()+" URL searching: "+url);
-			System.out.println("Trying one more time...");
-			for(String blackURL:blackListDomains){//checks if URL is blacklisted
-				if(url.contains(blackURL)){
-					return true;
-				}
-			
-			}
-		}*/
-		if(this.doDomainSearch && this.searchDomains(url)){return true;}
+		}
+
+		if(this.doDomainSearch && this.searchDomains(url)){return true;}//check to do domain search
 		return false;
 	}
 	
-	public boolean goodURL(String url){
+	public boolean goodURL(String url){//checks if given URL should be used, relying on whitelist
 		if(pagesVisited.contains(url)){//checks if this is a new site
 			return false;
 		}
@@ -150,68 +109,67 @@ public boolean badURL(String url){
 		return false;
 	}
 	
-	public void useBlackList(boolean useBlack){
+	public void useBlackList(boolean useBlack){//sets to use black list over whitelist
 		black = useBlack;
 	}
 	
-	public void addBlacklistedDomain(String domain){
+	public void addBlacklistedDomain(String domain){//add URLS to black list
 		blackListDomains.add(domain);
 	}
 	
-	public void addWhitelistedDomain(String domain){
+	public void addWhitelistedDomain(String domain){//add URLS to whitelist
 		whiteListDomains.add(domain);
 	}
 	
-	public void setMax(int new_max){
+	public void setMax(int new_max){//set max number of pages to crawl
 		Max_Pages = new_max;
 	}
 	
-	public void addURL(String new_url){
+	public void addURL(String new_url){//add links to cawl
 		pagesToVisit.add(new_url);
 	}
 	
-	public int getSuccess(){
+	public int getSuccess(){//returns the number of successful pages crawled
 		return success;
 	}
 	
-	public int getProblem(){
+	public int getProblem(){//get hiow many crawls failed
 		return problems;
 	}
-	public Set<String> getPagesVisited(){
+	
+	public Set<String> getPagesVisited(){//get the number of pages in total visited
 		return pagesVisited;
 	}
 
-	public void start(){
+	public void start(){//initiate a thread
 			if(t==null){
 				t = new Thread(this,name);
 				t.start();
 			}
 	}
 
-	public boolean searchDomains(String new_url){
+	public boolean searchDomains(String new_url){//search if the link is in the same domain as any other link previusly crawled
 		try{
-			for(String URL:pagesVisited){//checks if URL is blacklisted
+			for(String URL:pagesVisited){//searches through lists
 				if(URL.replaceAll("//", " ").replaceAll("/.*", " ").contains(new_url.replaceAll("//", " ").replaceAll("/.*", " "))){
 					return true;
 				}
 			}
-		}catch(Throwable e){
+		}catch(Throwable e){//on fail, try one more time, otherwise return false
 			System.out.println("Problem in search domain: "+e.getMessage());
 			try{
-				for(String URL:pagesVisited){//checks if URL is blacklisted
+				for(String URL:pagesVisited){
 					if(URL.replaceAll("//", " ").replaceAll("/.*", " ").contains(new_url.replaceAll("//", " ").replaceAll("/.*", " "))){
 						return true;
 					}
 				}
-			}catch(Throwable lkl){System.out.println("Problem in search domain: "+lkl.getMessage()); return true;}
-			
+			}catch(Throwable lkl){System.out.println("Problem in search domain, froce return true: "+lkl.getMessage()); return true;}
 		}
-			
 		return false;
 	}
 
 	@Override
-	public void run() {
+	public void run() {//overloaded run for multithreading
 		try{
 			crawlInternet();
 			if(pagesVisited.size()<Max_Pages && pagesToVisit.size()>1){
@@ -219,37 +177,14 @@ public boolean badURL(String url){
 			}
 		}catch(Throwable lkl){
 				System.out.println("Problem with thread "+name+": "+lkl.getMessage());
-				copy();
 				System.out.println("Attempting to restart....");
 				crawlInternet();
 		}
 		
 		
 	}
-	public Thread getT(){
+	public Thread getT(){//get the thread
 		return t;
 	}
-	
-	private boolean copy(){
-		List<String> tmp = new LinkedList<String>();
-		System.out.println("Size of pages: "+pagesToVisit.size());
-		if(pagesToVisit.size()<8){
-			return false;
-		}
-		try{
-			for(int x = pagesToVisit.size()-2;x>5;x--){
-				tmp.add(pagesToVisit.get(x));
-			}
-		}catch(Throwable lkl){
-			pagesToVisit.clear();
-		}
-		pagesToVisit=tmp;
-		System.out.println("Copied: "+pagesToVisit.size());
-		System.out.println("Now testing...");
-		System.out.println(pagesToVisit.remove(0).toString());
-		System.out.println("If you see this, it worked, congrats!");
-		return true;
-	}
-	
 	
 }
