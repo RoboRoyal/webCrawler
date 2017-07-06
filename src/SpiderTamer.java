@@ -8,14 +8,14 @@ import java.util.Set;
 
 public class SpiderTamer {
 	
-	public static void fileBlack(Spider p){
+	public static void fileBlack(Spider p){//fill in black list from black.txt
 		String blackFile = "black.txt";
 		try{
 			Scanner in = new Scanner(new File((blackFile)));
 			String line;
 			while(in.hasNextLine()){
 				line = in.nextLine();
-				if(line.length() >= 3){
+				if(line.length() >= 3 && !line.startsWith("#")){//ignore lines shorter then 3 chars and lines that start with #
 					p.addBlacklistedDomain(line);
 				}
 			}
@@ -26,14 +26,14 @@ public class SpiderTamer {
 
 	}
 	
-	public static void fileWhite(Spider p){
+	public static void fileWhite(Spider p){//fill in white list from white.txt
 		String whiteFile = "white.txt";
 		try{
 			Scanner in = new Scanner(new File((whiteFile)));
 			String line;
 			while(in.hasNextLine()){
 				line = in.nextLine();
-				if(line.length() >= 3){
+				if(line.length() >= 3 && !line.startsWith("#")){//ignore lines shorter then 3 chars and lines that start with #
 					p.addWhitelistedDomain(line);
 				}
 			}
@@ -42,50 +42,51 @@ public class SpiderTamer {
 			System.out.println("Prob: "+e.getMessage());
 		}
 	}
-	public static boolean writeToFile(Spider p){
+	
+	public static boolean writeToFile(Spider p){//writes results to file, urls to crawledURLS.txt and emails to foundEmails.txt
 		System.out.println("Writing to file...");
 		String fileOut = "crawledURLS.txt";
 		String mailFile = "foundEmails.txt";
-		Set<String> emails = new HashSet<String>();
-		for(String line:p.getPagesVisited()){
-			if(line.contains("mailto")){
-				emails.add(line);
+		 Set<String> emails = new HashSet<String>();
+		 
+		 for(String line:p.getPagesVisited()){//Separates out all the emails
+			 if(line.contains("mailto")){
+				 emails.add(line);
 			 }
 		 }
 		try{
-			BufferedWriter SpiderJocky = new BufferedWriter(new FileWriter(new File(fileOut)));
+			BufferedWriter SpiderJocky = new BufferedWriter(new FileWriter(new File(fileOut)));//write crawledURLS
 			System.out.println("Attempting to write "+p.getPagesVisited().size()+" links to file...");
 			SpiderJocky.write(p.getPagesVisited().toString().replaceAll("mailto.*"," ").replaceFirst("\\]", " ").replaceAll(",", "\n").replaceFirst("\\[", " "));
 			SpiderJocky.close();
 			
-			BufferedWriter SpiderJocky2 = new BufferedWriter(new FileWriter(new File(mailFile)));
+			BufferedWriter SpiderJocky2 = new BufferedWriter(new FileWriter(new File(mailFile)));//write emailsFound
 			System.out.println("Attempting to write "+emails.size()+" emails to file...");
 			SpiderJocky2.write(emails.toString().replaceFirst("\\]", " ").replaceAll(",", "\n").replaceFirst("\\[", " "));
 			SpiderJocky2.close();
 		}catch(IOException e){
 			System.out.println("Problem writing to file: "+e.getMessage());
+			e.printStackTrace();//we must go deeper
 			return false;
 		}
 		System.out.println("Written!");
 		return true;
 	}
 	
-	public static void fileAddLinks(Spider p) {
+	public static void fileAddLinks(Spider p) {//add links to craw from linksToCrawl.txt
 		String urlFile = "linksToCrawl.txt";
 		try{
 			Scanner in = new Scanner(new File(urlFile));
 			String line;
 			while(in.hasNextLine()){
 				line = in.nextLine();
-				if(line.length() >= 3){
+				if(line.length() >= 3&& !line.startsWith("#")){//ignore lines shorter then 3 chars and lines that start with #
 					p.addURL(line);
 				}
 			}
 			in.close();
 		}catch(IOException e){
 			System.out.println("Prob: "+e.getMessage());
-		}
-		
-	}
-	
+		}	
+	}	
 }
