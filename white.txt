@@ -1,1 +1,5 @@
+#whitelist will only search domains that are included here
+#will only be used if useBlackList is set to false
+#lines that start with "#" will be ignored
+
 .blu
