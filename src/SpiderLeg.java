@@ -14,17 +14,11 @@ public class SpiderLeg {
 	private List<String> links = new LinkedList<String>();
 	//private Document htmlDocument;
 	
-	SpiderLeg(){
-		
-	}
 
 	public boolean crawl(String url) {//crawls individual web page and saves the links, returns True if successful, False otherwise
 		try{
-			//System.out.println("Attempting to connect to:  "+url);
 			Connection connection = Jsoup.connect(url).userAgent(USER_AGENT);//conect to web page
 			Document htmlDocument = connection.get();//get contents of web page
-			//htmlDocument = htmlDocument;//save web page locally for parsing
-			//System.out.println("Done! Receved web page at: "+url);
 			
 			if(!connection.response().contentType().contains("text/html"))//print out if connection failed
             {
@@ -33,13 +27,11 @@ public class SpiderLeg {
             }
 			
 			Elements linksOnPage = htmlDocument.select(("a[href]"));//get all links from web page
-			//System.out.println("Found "+linksOnPage.size()+" links");
 			for(Element link:linksOnPage){
 				this.links.add(link.absUrl("href"));//save all links in the list
 			}
 		
 		}catch(IOException e){//error handler: prints error
-			//System.out.println("Problem: "+e.getMessage());	
 			return false;
 		}
 		return true;
