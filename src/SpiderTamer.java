@@ -21,7 +21,7 @@ public class SpiderTamer {
 			}
 			in.close();
 		}catch(IOException e){
-			System.out.println("Prob: "+e.getMessage());
+			System.out.println("Problem getting from blacklist: "+e.getMessage());
 		}
 
 	}
@@ -39,7 +39,7 @@ public class SpiderTamer {
 			}
 			in.close();
 		}catch(IOException e){
-			System.out.println("Prob: "+e.getMessage());
+			System.out.println("Problem getting from whitelist: "+e.getMessage());
 		}
 	}
 	
@@ -73,7 +73,7 @@ public class SpiderTamer {
 		return true;
 	}
 	
-	public static void fileAddLinks(Spider p) {//add links to craw from linksToCrawl.txt
+	public static void fileAddLinks(Spider p) {//add links to crawl from linksToCrawl.txt
 		String urlFile = "linksToCrawl.txt";
 		try{
 			Scanner in = new Scanner(new File(urlFile));
@@ -86,7 +86,8 @@ public class SpiderTamer {
 			}
 			in.close();
 		}catch(IOException e){
-			System.out.println("Prob: "+e.getMessage());
-		}	
-	}	
+			System.out.println("Problem reading from '"+urlFile+": "+e.getMessage());
+		}
+	}
+	
 }
