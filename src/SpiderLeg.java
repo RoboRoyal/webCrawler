@@ -79,8 +79,7 @@ public class SpiderLeg {
 
     Elements linksOnPage = htmlDocument.select("a[href]");// get all links from web page
     for (Element link : linksOnPage) {
-      String matchingFiles =
-          " msi| zip| rar| tar| ndl| pdf| lnk| eli| swf| gdl| gui| ndlp| jar| pdf| pdf_b| pdfb| apk| dmg| dll| guip| pe+| dll+| wix| exl| cdo| gdlp| rtf| cdlp| ppt| bmp| con| nat| tex| natp| dos| wrd| cdl| gif| conp| docx| xlsx| pptx";
+      String matchingFiles =" msi| zip| rar| tar| pdf| lnk| swf| exe| dll| jar| pdf| apk| dmg| xls| xlsm| xlsx| ppt| pptm| pptx| rtf| doc| docm| docx| bmp| bitmap| gif| dos| com| bat";
       //matchingFiles = " [^b]\\w+";--use this if you want to download file types that hector cant check
       if (link.absUrl("href").replaceAll(".*\\.", " ").replaceAll("/.*", " ")
           .matches(matchingFiles)) {
