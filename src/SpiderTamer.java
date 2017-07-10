@@ -1,119 +1,72 @@
 package spiders;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.HashSet;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
+/**
+ * <h1>Java WebCrawler</h1> Crawls the web
+ *
+ * @author Dakota Abernathy
+ * @version 1.02
+ * @since 2017-07-06
+ */
+public class SpiderSpawner {
 
+  private static final int MAX_PAGES = 100;//max number of pages to crawl (normally ends up scanning max number of pages)
+  private static final int NUMBER_OF_THREADS = 2;//Recommended between 1/10 and 1/20th of maxPages
+  private static final int PRIORITY = 5;//setting high increases performance but my lock up computer. Set between 1(lowest) and 10(max)
 
-public class SpiderTamer {
-  private static Logger logger = Logger.getLogger(Spider.class.getCanonicalName());
+  private SpiderSpawner() {}
 
-  private SpiderTamer() {}
+  @SuppressWarnings("unused")
+  public static void main(String[] args) throws InterruptedException {
 
-  /**
-   * This method gets the URLs/domains from black.txt and add them to the black list
-   *
-   * @param p The spider to change
-   * @return boolean If the read and write were successful
-   */
-  public static void fileBlack(Spider p) {
-    String blackFile = "Fileconfig/black.txt";
-    try (Scanner in = new Scanner(new File((blackFile)))) {
-      String line;
-      while (in.hasNextLine()) {
-        line = in.nextLine();
-        if (line.length() >= 3 && !line.startsWith("#")) {//ignore lines shorter then 3 chars and lines that start with #
-          p.addBlacklistedDomain(line);
-        }
-      }
-    } catch (IOException e) {
-      logger.error("Problem getting from blacklist: " + e.getMessage());
+    if (NUMBER_OF_THREADS < 1) {//checks thread requirements
+      System.out.println("Need at least 1 thread");
+      System.exit(1);
     }
-  }
-
-  /**
-   * This method gets the URLs/domains from white.txt and add them to the white list
-   *
-   * @param p The spider to change
-   * @return boolean If the read and write were successful
-   */
-  public static void fileWhite(Spider p) {
-    String whiteFile = "Fileconfig/white.txt";
-    try (Scanner in = new Scanner(new File((whiteFile)))) {
-      String line;
-      while (in.hasNextLine()) {
-        line = in.nextLine();
-        if (line.length() >= 3 && !line.startsWith("#")) {//ignore lines shorter then 3 chars and lines that start with #
-          p.addWhitelistedDomain(line);
-        }
-      }
-    } catch (IOException e) {
-      logger.error("Problem getting from whitelist: " + e.getMessage());
+    if (PRIORITY > 10 || PRIORITY < 1) {//checks priority requirements
+      System.out.println("Priority must be set between 1 and 10");
+      System.exit(1);
     }
-  }
+    if (MAX_PAGES < 1) {//checks pages requirements
+      System.out.println("Cant crawl less then one page");
+      System.exit(1);
+    }
 
-  /**
-   * This method writes to text files the URLs crawled and the email's found
-   *
-   * @param p The spider to get info from
-   * @return boolean If the read and write were successful
-   */
-  public static boolean writeToFile(Spider p) {
-    System.out.println("Writing to file...");
-    String fileOut = "output/crawledURLS.txt";
-    String mailFile = "output/foundEmails.txt";
-    Set<String> emails = new HashSet<String>();
+    System.out.println("Starting webcrawl");
 
-    for (String line : p.getPagesVisited()) {//Separates out all the emails
-      if (line.contains("mailto")) {
-        emails.add(line);
+    ArrayList<Spider> spiderArmy = new ArrayList<Spider>();//Initializes all the spiders
+    for (int x = 0; x < NUMBER_OF_THREADS; x++) {
+      spiderArmy.add(new Spider("Spider-" + x));
+    }
+
+    if (spiderArmy.get(0) != null) {//set parameters for all the threads
+      System.out.println("Adding parameters");
+      spiderArmy.get(0).setMax(MAX_PAGES);
+      Spider.doDomainSearch = false;
+      SpiderTamer.fileWhite(spiderArmy.get(0));
+      SpiderTamer.fileBlack(spiderArmy.get(0));
+      SpiderTamer.fileAddLinks(spiderArmy.get(0));
+
+    }
+    long start_time = System.currentTimeMillis();//used for measuring time of crawl
+
+    for (Spider jock : spiderArmy) {//starts each thread crawling
+      System.out.println("Starting: " + jock.name);
+      jock.start();
+      jock.getT().setPriority(PRIORITY);
+      try {
+        Thread.sleep(100);
+      } catch (Throwable e) {
       }
     }
-    try (Writer spiderJocky = new BufferedWriter(new FileWriter(new File(fileOut)));
-        Writer spiderJocky2 = new BufferedWriter(new FileWriter(new File(mailFile)))) {
 
-      //write crawledURLS
-      System.out.println("Attempting to write " + p.getPagesVisited().size() + " links to file...");
-      spiderJocky.write(p.getPagesVisited().toString().replaceAll("mailto.*", " ")
-          .replaceFirst("\\]", " ").replaceAll(",", "\n").replaceFirst("\\[", " "));
-
-      //write emailsFound
-      System.out.println("Attempting to write " + emails.size() + " emails to file...");
-      spiderJocky2.write(emails.toString().replaceFirst("\\]", " ").replaceAll(",", "\n")
-          .replaceFirst("\\[", " "));
-    } catch (IOException e) {
-      logger.error("Problem writing to file: " + e.getMessage(), e);
-      return false;
+    for (Spider jock : spiderArmy) {//waits for all threads to finish crawling
+      jock.getT().join();
     }
-    System.out.println("Written!");
-    return true;
-  }
 
-  /**
-   * This method gets the URLs from linksToCrawl and adds them to the list of links to be crawled
-   *
-   * @param p The spider to add links to
-   * @return boolean If the read and write were successful
-   */
-  public static void fileAddLinks(Spider p) {
-    String urlFile = "Fileconfig/linksToCrawl.txt";
-    try (Scanner in = new Scanner(new File(urlFile))) {
-      String line;
-      while (in.hasNextLine()) {
-        line = in.nextLine();
-        if (line.length() >= 3 && !line.startsWith("#")) {//ignore lines shorter then 3 chars and lines that start with #
-          p.addURL(line);
-        }
-      }
-    } catch (IOException e) {
-      logger.error("Problem reading from '" + urlFile + ": " + e.getMessage());
-    }
+    System.out.println("Time: " + (System.currentTimeMillis() - start_time) / 1000 + " seconds");//print results of crawl
+
+    SpiderTamer.writeToFile(spiderArmy.get(0));//save results	
   }
 }
