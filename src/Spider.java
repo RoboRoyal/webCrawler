@@ -10,6 +10,7 @@ public class Spider implements Runnable {
   private static Set<String> blackListDomains = new HashSet<String>();
   private static Set<String> whiteListDomains = new HashSet<String>();
   public static boolean doDomainSearch = false;
+  public static boolean run = true;
   private static Logger logger = Logger.getLogger(Spider.class.getCanonicalName());
 
   private int problems;
@@ -60,7 +61,7 @@ public class Spider implements Runnable {
    * Primary crawling method
    */
   private void crawlInternet() {
-    while (pagesVisited.size() < Max_Pages) {
+    while (pagesVisited.size() < Max_Pages && run) {
       String currentURL;
       SpiderLeg leg = new SpiderLeg();
       if (pagesToVisit.isEmpty()) {
@@ -89,8 +90,6 @@ public class Spider implements Runnable {
         problems++;
       }
     }
-    System.out.println("\n\t***Finished Crawling***\n\nVisited " + pagesVisited.size()
-        + " web pages with an additional " + pagesToVisit.size() + " links found.");
   }
 
   /**
@@ -268,7 +267,15 @@ public class Spider implements Runnable {
       crawlInternet();
     }
   }
-
+  
+  /**
+   * Returns the number of pages left in the que to visit
+   *
+   * @return pagesToVisit size
+   */
+  public static int pagesToVisitSize(){
+	  return pagesToVisit.size();
+  }
   /**
    * Returns the active thread
    *
@@ -277,4 +284,9 @@ public class Spider implements Runnable {
   public Thread getT() {
     return t;
   }
+  /**
+   * Returns the number of files downloaded
+   *
+   * @return pagesToVisit size
+   */
 }
