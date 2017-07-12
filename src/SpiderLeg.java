@@ -6,23 +6,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import org.apache.log4j.Logger;
 import org.jsoup.*;
-import org.jsoup.Connection.Response;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class SpiderLeg {
   private static boolean getContent = true;
-  private static boolean savePics = false;
-  private static Logger logger = Logger.getLogger(Spider.class.getCanonicalName());
+  private static boolean savePics = true;
+  public static int filesDownloaded = 0;//max number of files to be downloaded, when limit is met will stop downloading pictures too
+  private static final int MAX_FILES = 10;//max number of files allowed to be downloaded, -1 for no limit
+  private static Logger logger = Logger.getLogger(SpiderLeg.class.getCanonicalName());
 
   private static final String USER_AGENT =
       "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";// pretend we are using a browser																																							// browser
+
   private List<String> links = new LinkedList<String>();
 
   /**
@@ -35,7 +36,7 @@ public class SpiderLeg {
   public boolean crawl(String url) {
     try {
       Connection connection = Jsoup.connect(url).userAgent(USER_AGENT);// Connects to web pages
-      connection.timeout(12000);
+      connection.timeout(8112);
       Document htmlDocument = connection.get();// get contents of web page
 
       if (!connection.response().contentType().contains("text/html")) {// print out if connection failed
@@ -47,7 +48,7 @@ public class SpiderLeg {
         this.links.add(link.absUrl("href"));// save all links in the list
       }
       try {
-        if (getContent) {
+        if (getContent && (filesDownloaded < MAX_FILES || MAX_FILES == -1) ) {
           getContent(htmlDocument);
         }
       } catch (Exception t) {
@@ -79,18 +80,22 @@ public class SpiderLeg {
 
     Elements linksOnPage = htmlDocument.select("a[href]");// get all links from web page
     for (Element link : linksOnPage) {
-      String matchingFiles =" msi| zip| rar| tar| pdf| lnk| swf| exe| dll| jar| pdf| apk| dmg| xls| xlsm| xlsx| ppt| pptm| pptx| rtf| doc| docm| docx| bmp| bitmap| gif| dos| com| bat";
-      //matchingFiles = " [^b]\\w+";--use this if you want to download file types that hector cant check
-      if (link.absUrl("href").replaceAll(".*\\.", " ").replaceAll("/.*", " ")
-          .matches(matchingFiles)) {
+      String matchingFiles =
+          " msi| zip| rar| tar| pdf| lnk| swf| exe| dll| jar| pdf| apk| dmg| xls| xlsm| xlsx| ppt| pptm| pptx| rtf| doc| docm| docx| bmp| bitmap| gif| dos| bat";//cant do .com files
+      //matchingFiles = " [^b]\\w+";//use this if you want to download file types that hector can't check on blu netowrk
+      //matchingFiles = "(?! com| net| org| gov| info| biz| top| io| blu| edu).{3-4}";//use this if you want to download file types that hector can't check on Internet
+      //matchingFiles = " mp4| mp3| webm| avi| wmv| mpeg4| flv| flac"//video and audio files only
+      if (link.absUrl("href").replaceAll(".*\\.", " ").replaceAll("/.*", " ").matches(matchingFiles)) {
+    	filesDownloaded++;
         file((new URL(link.absUrl("href").toString())),
-            "output/files/doc_" + System.currentTimeMillis() + "."
-                + link.absUrl("href").toString().replaceAll(".*\\.", " ").replaceAll("/.*", " "));
+            "output/files/doc_" + System.currentTimeMillis()//+ link.absUrl("href").toString().replaceAll(".*//", " ").replaceAll("/.*", " ").replaceAll("\\.", "_")
+                + link.absUrl("href").toString().replaceAll(".*\\.", " ").replaceAll("/.*", " ").replaceFirst(" ", "."));
       }
     }
 
     if (!htmlDocument.getElementsByAttribute("download").isEmpty()) {//checks if there is downloadable content
       for (Element doc : htmlDocument.getElementsByAttribute("download")) {
+    	filesDownloaded++;
         String docLocation = doc.absUrl("src");
         URL url2 = new URL(docLocation);
         String fileLocation = "output/files/doc_";
@@ -105,8 +110,7 @@ public class SpiderLeg {
             out.write(b);
           }
           file(url2, fileLocation);
-        } catch (Exception e) {
-        }
+        } catch (Exception e) {}
       }
     }
     if (savePics && !htmlDocument.getElementsByTag("img").isEmpty()) {//checks for downloadable images
