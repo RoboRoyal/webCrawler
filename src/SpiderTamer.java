@@ -13,7 +13,7 @@ import org.apache.log4j.Logger;
 
 
 public class SpiderTamer {
-  private static Logger logger = Logger.getLogger(Spider.class.getCanonicalName());
+  private static Logger logger = Logger.getLogger(SpiderTamer.class.getCanonicalName());
 
   private SpiderTamer() {}
 
@@ -66,7 +66,7 @@ public class SpiderTamer {
    * @return boolean If the read and write were successful
    */
   public static boolean writeToFile(Spider p) {
-    System.out.println("Writing to file...");
+	logger.info("Writing to file...");
     String fileOut = "output/crawledURLS.txt";
     String mailFile = "output/foundEmails.txt";
     Set<String> emails = new HashSet<String>();
@@ -80,19 +80,19 @@ public class SpiderTamer {
         Writer spiderJocky2 = new BufferedWriter(new FileWriter(new File(mailFile)))) {
 
       //write crawledURLS
-      System.out.println("Attempting to write " + p.getPagesVisited().size() + " links to file...");
-      spiderJocky.write(p.getPagesVisited().toString().replaceAll("mailto.*", " ")
-          .replaceFirst("\\]", " ").replaceAll(",", "\n").replaceFirst("\\[", " "));
+      logger.info("Attempting to write " + p.getPagesVisited().size() + " links to file...");
+      spiderJocky.write(p.getPagesVisited().toString().replaceAll(",", "\n").replaceAll("mailto.*", " ")
+          .replaceFirst("\\]", " ").replaceFirst("\\[", " "));
 
       //write emailsFound
-      System.out.println("Attempting to write " + emails.size() + " emails to file...");
+      logger.info("Attempting to write " + emails.size() + " emails to file...");
       spiderJocky2.write(emails.toString().replaceFirst("\\]", " ").replaceAll(",", "\n")
           .replaceFirst("\\[", " "));
     } catch (IOException e) {
       logger.error("Problem writing to file: " + e.getMessage(), e);
       return false;
     }
-    System.out.println("Written!");
+    logger.info("Written!");
     return true;
   }
 
@@ -116,4 +116,5 @@ public class SpiderTamer {
       logger.error("Problem reading from '" + urlFile + ": " + e.getMessage());
     }
   }
+
 }
