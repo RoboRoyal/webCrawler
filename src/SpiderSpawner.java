@@ -13,39 +13,44 @@ import org.apache.log4j.Logger;
  */
 public class SpiderSpawner {
 
-	private static final int MAX_PAGES = 2000;// max number of pages to crawl(normally ends up scanning max number of pages)
-	private static final int NUMBER_OF_THREADS = 20;// Recommended between 1/10 and 1/20th of maxPages, with limited return. ~<50 recommended
+	private static final int MAX_PAGES = 20;// max number of pages to crawl(normally ends up scanning max number of pages)
+	private static final int NUMBER_OF_THREADS = 2;// Recommended between 1/10 and 1/20th of maxPages		
 	private static final int PRIORITY = 5;//setting high increases performance(sometimes) but may lock up computer. Set between 1(lowest) and 10(max)
-	private static final boolean LIMIT_DOMAIN = false;
-	private static final boolean GET_CONTENT = false;
-	private static final boolean USE_BLACKLIST = false;
-	private static final boolean SAVE_LINKS = false;
-	private static final boolean QUIET = true;
-	private static final boolean CLEAN = true;// Whether or not to clear out all written files when done
+	private static final boolean CLEAN = false;// Whether or not to clear out all written files when done
+	private static final boolean SAVE_CONTENT = true;//to download files
+	private static final boolean LIMIT_DOMAIN = false;//limit the crawler to one page per domain
+	private static final boolean SAVE_LINKS = true;//Save URLs and emails to text file
+	private static final boolean SAVE_IMAGES = true;//to save found imgs
+	private static final boolean QUIET = false;//to hide small errors
+	private static final int MAX_FILES = 10;//max number of files allowed to be downloaded, -1 for inf
 	private static Logger logger = Logger.getLogger(SpiderSpawner.class.getCanonicalName());
+	
+	private static ArrayList<Spider> spiderArmy = new ArrayList<Spider>();// Initializes all the spiders	
 
 	private SpiderSpawner() {}
 
-	@SuppressWarnings("unused")
 	public static void main(String[] args) throws InterruptedException {
-		check();//check given parameters
-		
-		ArrayList<Spider> spiderArmy = new ArrayList<Spider>(NUMBER_OF_THREADS);// Initializes all the spiders	
 		for (int x = 0; x < NUMBER_OF_THREADS; x++) {
 			spiderArmy.add(new Spider("Spider-" + x));
 		}
 
 		if (spiderArmy.get(0) != null) {// set parameters for all the threads
 			logger.info("Adding parameters...");
-			spiderArmy.get(0).setMax(MAX_PAGES);
-			spiderArmy.get(0).useBlackList(USE_BLACKLIST);
-			Spider.doDomainSearch = LIMIT_DOMAIN;
+			SpiderLeg.maxFiles(MAX_FILES);//content settings
+			SpiderLeg.saveContent(SAVE_CONTENT);
+			SpiderLeg.savePics(SAVE_IMAGES);
+			Spider.setMax(MAX_PAGES);
+			Spider.updateQUIET(QUIET);
+			Spider.doDomainSearch = LIMIT_DOMAIN;//crawler settings
 			SpiderTamer.fileWhite(spiderArmy.get(0));
 			SpiderTamer.fileBlack(spiderArmy.get(0));
 			SpiderTamer.fileAddLinks(spiderArmy.get(0));
-			SpiderLeg.getContent = GET_CONTENT;
+		}else{
+			logger.error("Problem initilizing the spider army");
+			System.exit(1);
 		}
 
+		check();//check given parameters
 		long startTime = System.currentTimeMillis();// used for measuring time of crawl		
 		logger.info("Starting webcrawl...");
 
@@ -54,40 +59,38 @@ public class SpiderSpawner {
 			if(!QUIET) logger.info("Starting: " + jock.name);
 			jock.start();
 			jock.getT().setPriority(PRIORITY);
-			if(x==0){
-				try {
-					Thread.sleep(1200);//extra wait to allow thread to start
-				} catch (Throwable e) {}
-			}
-			while (Spider.pagesToVisitSize() <= x+1 && Spider.pagesToVisitSize() != 0) { 
+			while (Spider.pagesToVisitSize() <= x*2 && Spider.pagesToVisitSize() != 0) {
 				try {//waits for new links to crawl before starting thread
 					Thread.sleep(100);
-				} catch (Throwable e) {}
+				} catch (Exception e) {logger.trace(e);}
 			}
+			try {
+				Thread.sleep(10);//extra wait to allow thread to start
+			} catch (Exception e) {logger.trace(e);}
 		}
-
-		int prog = spiderArmy.get(0).getPagesVisited().size();
+		
+		int pagesSoFar;
 		int last = 0;
-		do {
+		do{
 			try {//waits until crawl is compleat or there are no pages left to crawl
 				Thread.sleep(1080);//GTX
 			} catch (Exception e) {logger.trace(e);}
-			prog = spiderArmy.get(0).getPagesVisited().size();
-			if((100*prog)/MAX_PAGES >= last+10){
-				if(!QUIET) {logger.info("Progress: "+(100*prog)/MAX_PAGES+"%");
-				last = (100*prog)/MAX_PAGES;}
-			}
-		}while (prog < MAX_PAGES && Spider.pagesToVisitSize() != 0);
+			pagesSoFar = spiderArmy.get(0).getPagesVisited().size();
+			if((pagesSoFar*100/MAX_PAGES)>=last+10){
+				logger.info(pagesSoFar*100/MAX_PAGES+"%");
+				last = pagesSoFar*100/MAX_PAGES;}
+		}while (pagesSoFar < MAX_PAGES && Spider.pagesToVisitSize() != 0) ;
 		
 		logger.info("***Finished Crawling***");//outputs results of crawl
 		logger.info("Visited " + spiderArmy.get(0).getPagesVisited().size() + " web pages with an additional "
 				+ Spider.pagesToVisitSize() + " links found.");
-		if(GET_CONTENT) logger.info("Downloaded: "+SpiderLeg.filesDownloaded+" files");
+		logger.info("Downloaded: "+SpiderLeg.filesDownloaded()+" files");
 		logger.info("Time: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds");// prints time of crawl
-		if(prog > 0 && SAVE_LINKS) SpiderTamer.writeToFile(spiderArmy.get(0));// save results
+		if(pagesSoFar > 0 && SAVE_LINKS){
+			SpiderTamer.writeToFile(spiderArmy.get(0));}// save results
 
 		logger.info("Ending any remaining threads...");
-		Spider.run = false;//tells threads to stop running
+		Spider.run = false;//tells threads to stop running-don't really need this
 		for (Spider jock : spiderArmy) {// waits for all threads to finish crawling
 			jock.getT().join();
 		}
@@ -114,13 +117,13 @@ public class SpiderSpawner {
 			}
 			File folder2 = new File("output/files");//clean files
 			File[] files2 = folder2.listFiles();
-			if (files2 != null) { //checks to make sure folder is there
+			if (files2 != null) { /// checks to make sure folder is there
 				for (File f : files2) {
 					f.delete();
 				}
 			}
-		} catch (Throwable e) {
-			logger.error("Problem deleting files: " + e);
+		} catch (Exception e) {
+			logger.error("Problem deleting files: "+e);
 		}
 	}
 	/**
@@ -135,7 +138,7 @@ public class SpiderSpawner {
 			System.exit(1);
 		}
 		if (NUMBER_OF_THREADS > MAX_PAGES) {// checks thread requirements
-			logger.error("Can't have more threads then pages to crawl");
+			logger.error("Don't want to have more threads then pages to crawl");
 			System.exit(1);
 		}
 		if (PRIORITY > 10 || PRIORITY < 1) {// checks priority requirements
@@ -145,6 +148,13 @@ public class SpiderSpawner {
 		if (MAX_PAGES < 1) {// checks pages requirements
 			logger.error("Cant crawl less then one page");
 			System.exit(1);
+		}
+		if(Spider.pagesToVisitSize() < 1){
+			logger.error("Need at least one starting URLs");
+			System.exit(1);	
+		}
+		if(Spider.pagesToVisitSize() < 2){
+			SpiderTamer.fileAddLinks(spiderArmy.get(0));
 		}
 		if (MAX_PAGES >= 100 && NUMBER_OF_THREADS == 1) {
 			logger.warn("Crawler will be slow with only one thread");
