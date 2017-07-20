@@ -73,19 +73,19 @@ public class Spider implements Runnable {
         currentURL = getNextURL();
       }
       if (leg.crawl(currentURL)) {
-/*    	 try {
+    	 try {
           for (String newURL : leg.getLinks()) {//try to add only new links
             if (!pagesToVisit.contains(newURL)) {
               pagesToVisit.add(newURL);
             }
           }
         } catch (Exception k) {
-*/        try {
+        try {
             Thread.sleep(12);
           } catch (InterruptedException e) {logger.trace(e);}
-//          if(!quiet) logger.error("Problem adding links on thread: " + this.name + ": " + k);
+          if(!quiet) logger.error("Problem adding links on thread: " + this.name + ": " + k);
           pagesToVisit.addAll(leg.getLinks());//force add all links
-//        }
+        }
         success++;
       } else {
         problems++;
