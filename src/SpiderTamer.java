@@ -13,7 +13,7 @@ import org.apache.log4j.Logger;
 
 
 public class SpiderTamer {
-  private static Logger logger = Logger.getLogger(Spider.class.getCanonicalName());
+  private static Logger logger = Logger.getLogger(SpiderTamer.class.getCanonicalName());
 
   private SpiderTamer() {}
 
@@ -21,11 +21,11 @@ public class SpiderTamer {
    * This method gets the URLs/domains from black.txt and add them to the black list
    *
    * @param p The spider to change
-   * @return boolean If the read and write were successful
+   * @return void
    */
   public static void fileBlack(Spider p) {
     String blackFile = "Fileconfig/black.txt";
-    try (Scanner in = new Scanner(new File((blackFile)))) {
+    try (Scanner in = new Scanner(new File(blackFile))) {
       String line;
       while (in.hasNextLine()) {
         line = in.nextLine();
@@ -34,7 +34,7 @@ public class SpiderTamer {
         }
       }
     } catch (IOException e) {
-      logger.error("Problem getting from blacklist: " + e.getMessage());
+      logger.error("Problem getting from blacklist: " + e);
     }
   }
 
@@ -42,11 +42,11 @@ public class SpiderTamer {
    * This method gets the URLs/domains from white.txt and add them to the white list
    *
    * @param p The spider to change
-   * @return boolean If the read and write were successful
+   * @return void
    */
   public static void fileWhite(Spider p) {
     String whiteFile = "Fileconfig/white.txt";
-    try (Scanner in = new Scanner(new File((whiteFile)))) {
+    try (Scanner in = new Scanner(new File(whiteFile))) {
       String line;
       while (in.hasNextLine()) {
         line = in.nextLine();
@@ -55,7 +55,7 @@ public class SpiderTamer {
         }
       }
     } catch (IOException e) {
-      logger.error("Problem getting from whitelist: " + e.getMessage());
+      logger.error("Problem getting from whitelist: " + e);
     }
   }
 
@@ -69,7 +69,7 @@ public class SpiderTamer {
 	logger.info("Writing to file...");
     String fileOut = "output/crawledURLS.txt";
     String mailFile = "output/foundEmails.txt";
-    Set<String> emails = new HashSet<String>();
+    Set<String> emails = new HashSet<>();
 
     for (String line : p.getPagesVisited()) {//Separates out all the emails
       if (line.contains("mailto")) {
@@ -103,7 +103,7 @@ public class SpiderTamer {
    * This method gets the URLs from linksToCrawl and adds them to the list of links to be crawled
    *
    * @param p The spider to add links to
-   * @return boolean If the read and write were successful
+   * @return void
    */
   public static void fileAddLinks(Spider p) {
     String urlFile = "Fileconfig/linksToCrawl.txt";
@@ -114,9 +114,9 @@ public class SpiderTamer {
         if (line.length() >= 3 && !line.startsWith("#")) {//ignore lines shorter then 3 chars and lines that start with #
           p.addURL(line);
         }
-      }
+      } 
     } catch (IOException e) {
-      logger.error("Problem reading from " + urlFile + ": " + e.getMessage());
+      logger.error("Problem reading from '" + urlFile + ": " + e);
     }
   }
 }
