@@ -3,13 +3,12 @@
 #lines that start with "#" will be ignored
 
 
-.blu
 
 #regular
-#.org
-#.net
-#.com
+.org
+.net
+.com
 
 #Generally safe:
-#.gov
-#.edu
+.gov
+.edu
