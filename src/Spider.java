@@ -40,7 +40,7 @@ public class Spider implements Runnable {
     String nextURL;
     do {
       nextURL = Spider.pagesToVisit.remove(0);//get next URL in list
-    } while ((black && isBadURL(nextURL)) || (!black && isGoodURL(nextURL)));//loop through list until we find a good URL
+    } while ((black && isBadURL(nextURL)) || (!black && !isGoodURL(nextURL)));//loop through list until we find a good URL
     pagesVisited.add(nextURL);//add new URL to the set we visited
     return nextURL;
   }
@@ -78,6 +78,7 @@ public class Spider implements Runnable {
             }
           }
         } catch (Exception k) {
+        	logger.warn("Problem adding new URLS");
           try {
             Thread.sleep(12);
           } catch (InterruptedException e) {
@@ -90,6 +91,8 @@ public class Spider implements Runnable {
         problems++;
       }
     }
+    
+    //System.out.println("\n\t***Finished Crawling***\n\nVisited " + pagesVisited.size()+ " web pages with an additional " + pagesToVisit.size() + " links found.");
   }
 
   /**
@@ -218,7 +221,6 @@ public class Spider implements Runnable {
     }
   }
 
-
   /**
    * This method is used to check if the given URL is part of a domain that has already been visited
    *
@@ -234,7 +236,6 @@ public class Spider implements Runnable {
         }
       }
     } catch (Exception e) {//on fail, try one more time, otherwise return false
-      logger.error("Problem in search domain; thread: " + this.name + "; Error: " + e.getMessage());
       try {
         for (String URL : pagesVisited) {
           if (URL.replaceAll("//", " ").replaceAll("/.*", " ")
@@ -263,7 +264,7 @@ public class Spider implements Runnable {
       }
     } catch (Exception dlv) {
       logger.error("Problem in thread: " + this.name + "; Error: " + dlv.getMessage());
-      logger.debug("Attempting to restart thread: " + this.name + "...");
+      logger.info("Attempting to restart thread: " + this.name + "...");
       crawlInternet();
     }
   }
@@ -284,9 +285,4 @@ public class Spider implements Runnable {
   public Thread getT() {
     return t;
   }
-  /**
-   * Returns the number of files downloaded
-   *
-   * @return pagesToVisit size
-   */
 }
