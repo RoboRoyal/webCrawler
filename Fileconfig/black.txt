@@ -2,9 +2,29 @@
 #will only be used if useBlackList is set to true
 #lines that start with "#" will be ignored
 
-docs.atlassian.com
-atlassian.com
- sourcetreeapp.com
-apache.org
- gnu.org
-jfree.org
+
+#These domains generally have nothing good in them
+.ru
+.top
+.xyz
+.info
+.onion
+.win
+.biz
+.xxx
+
+#These sites just aren't worth crawling-unless you want to
+youtube.
+facebook.
+wikipedia.
+
+#This makes it so you can only connect to secure sites, is slightly safer
+#makes it so it must be https
+http://
+
+#These sites are just to block external sites when offline
+.net
+.org
+.com
+.gov
+.edu
