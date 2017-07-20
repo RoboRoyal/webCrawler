@@ -2,13 +2,15 @@ package spiders;
 
 import java.util.*;
 import org.apache.log4j.Logger;
+import org.w3c.dom.events.EventException;
 
 public class Spider implements Runnable {
-  private static int Max_Pages = 20;
-  private static Set<String> pagesVisited = new HashSet<String>();
+  private static int maxPages = 20;
+  private static Set<String> pagesVisited = new HashSet<>();
   private static List<String> pagesToVisit = Collections.synchronizedList(new LinkedList<String>());
-  private static Set<String> blackListDomains = new HashSet<String>();
-  private static Set<String> whiteListDomains = new HashSet<String>();
+  private static Set<String> blackListDomains = new HashSet<>();
+  private static Set<String> whiteListDomains = new HashSet<>();
+  private static boolean quiet = false;
   public static boolean doDomainSearch = false;
   public static boolean run = true;
   private static Logger logger = Logger.getLogger(Spider.class.getCanonicalName());
@@ -17,7 +19,7 @@ public class Spider implements Runnable {
   private int success;
   private boolean black = true;
   private Thread t;
-  public String name;
+  String name;
 
   public Spider() {
     problems = 0;
@@ -61,7 +63,7 @@ public class Spider implements Runnable {
    * Primary crawling method
    */
   private void crawlInternet() {
-    while (pagesVisited.size() < Max_Pages && run) {
+    while (pagesVisited.size() < maxPages && run) {
       String currentURL;
       SpiderLeg leg = new SpiderLeg();
       if (pagesToVisit.isEmpty()) {
@@ -71,28 +73,24 @@ public class Spider implements Runnable {
         currentURL = getNextURL();
       }
       if (leg.crawl(currentURL)) {
-        try {
+/*    	 try {
           for (String newURL : leg.getLinks()) {//try to add only new links
             if (!pagesToVisit.contains(newURL)) {
               pagesToVisit.add(newURL);
             }
           }
         } catch (Exception k) {
-        	logger.warn("Problem adding new URLS");
-          try {
+*/        try {
             Thread.sleep(12);
-          } catch (InterruptedException e) {
-          }
-          logger.error("Problem adding links on thread: " + this.name + ": " + k.getMessage());
+          } catch (InterruptedException e) {logger.trace(e);}
+//          if(!quiet) logger.error("Problem adding links on thread: " + this.name + ": " + k);
           pagesToVisit.addAll(leg.getLinks());//force add all links
-        }
+//        }
         success++;
       } else {
         problems++;
       }
     }
-    
-    //System.out.println("\n\t***Finished Crawling***\n\nVisited " + pagesVisited.size()+ " web pages with an additional " + pagesToVisit.size() + " links found.");
   }
 
   /**
@@ -106,17 +104,17 @@ public class Spider implements Runnable {
     if (pagesVisited.contains(url)) {//checks if this site has been visited before
       return true;
     }
-    if (url == "") {
-      return true;
+    if(url == ""){
+    	return true;
     }
     for (String blackURL : blackListDomains) {//checks if URL is blacklisted
       if (url.contains(blackURL)) {
         return true;
       }
-    }
-    if (doDomainSearch && this.searchDomains(url)) {
-      return true;
     }//check to do domain search
+    if (doDomainSearch && this.searchDomains(url, true)) {
+      return true;
+    }
     return false;
   }
 
@@ -171,8 +169,8 @@ public class Spider implements Runnable {
    *
    * @param new_max The new max number of pages to crawl
    */
-  public void setMax(int new_max) {
-    Max_Pages = new_max;
+  public static void setMax(int newMax) {
+    maxPages = newMax;
   }
 
   /**
@@ -180,8 +178,8 @@ public class Spider implements Runnable {
    *
    * @param new_url Another URL to be crawled
    */
-  public void addURL(String new_url) {
-    pagesToVisit.add(new_url);
+  public void addURL(String newUrl) {
+    pagesToVisit.add(newUrl);
   }
 
   /**
@@ -221,34 +219,28 @@ public class Spider implements Runnable {
     }
   }
 
+
   /**
    * This method is used to check if the given URL is part of a domain that has already been visited
    *
    * @param new_url The domain to be searched against visited URLs
    *        @ return boolean If the domain has already been visited
    */
-  public boolean searchDomains(String new_url) {
-    try {
-      for (String URL : pagesVisited) {//searches through lists
-        if (URL.replaceAll("//", " ").replaceAll("/.*", " ")
-            .contains(new_url.replaceAll("//", " ").replaceAll("/.*", " "))) {
-          return true;
-        }
-      }
-    } catch (Exception e) {//on fail, try one more time, otherwise return false
-      try {
-        for (String URL : pagesVisited) {
-          if (URL.replaceAll("//", " ").replaceAll("/.*", " ")
-              .contains(new_url.replaceAll("//", " ").replaceAll("/.*", " "))) {
-            return true;
-          }
-        }
-      } catch (Exception dlv) {
-        logger.error("Problem in search domain, forcing true; thread: " + this.name + "; Error: "
-            + dlv.getMessage());
-        return true;
-      }
-    }
+  public boolean searchDomains(String newUrl, boolean try2) {
+
+	  try {
+	      for (String URL : pagesVisited) {//searches through lists
+	        if (URL.replaceAll("//", " ").replaceAll("/.*", " ")
+	            .contains(newUrl.replaceAll("//", " ").replaceAll("/.*", " "))) {
+	          return true;
+	        }
+	      }
+	    } catch (Exception e) {//on fail, try one more time, otherwise return false
+	    	if(!quiet){ 
+	    		logger.error("Problem in search domain; thread: " + this.name + "; Error: " + e);}
+	    	if(!try2){ 
+	    		searchDomains(newUrl, true);}
+	    }
     return false;
   }
 
@@ -259,12 +251,12 @@ public class Spider implements Runnable {
   public void run() {
     try {
       crawlInternet();
-      if (pagesVisited.size() < Max_Pages && pagesToVisit.size() > 1) {
-        throw new Exception("Missed number of pages");
+      if (pagesVisited.size() < maxPages && pagesToVisit.size() > 1) {
+        throw new EventException((short) 12, "Missed number of pages");
       }
     } catch (Exception dlv) {
-      logger.error("Problem in thread: " + this.name + "; Error: " + dlv.getMessage());
-      logger.info("Attempting to restart thread: " + this.name + "...");
+      logger.error("Problem in thread: " + this.name + "; Error: " + dlv);
+      logger.debug("Attempting to restart thread: " + this.name + "...");
       crawlInternet();
     }
   }
@@ -278,6 +270,15 @@ public class Spider implements Runnable {
 	  return pagesToVisit.size();
   }
   /**
+   * This method sets if to hide errors
+   * @param boolean updates status
+   * @return void
+   */
+  public static void updateQUIET(boolean updated) {
+	quiet = updated;
+	SpiderLeg.updateQuiet(updated);
+  }
+  /**
    * Returns the active thread
    *
    * @return t The thread this instance of Spider is running on
@@ -285,4 +286,9 @@ public class Spider implements Runnable {
   public Thread getT() {
     return t;
   }
+  /**
+   * Returns the number of files downloaded
+   *
+   * @return pagesToVisit size
+   */
 }
