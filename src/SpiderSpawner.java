@@ -13,13 +13,14 @@ import org.apache.log4j.Logger;
  */
 public class SpiderSpawner {
 
-	private static final int MAX_PAGES = 20;// max number of pages to crawl(normally ends up scanning max number of pages)
-	private static final int NUMBER_OF_THREADS = 2;// Recommended between 1/10 and 1/20th of maxPages		
+	private static final int MAX_PAGES = 200;// max number of pages to crawl(normally ends up scanning max number of pages)
+	private static final int NUMBER_OF_THREADS = 8;// Recommended between 1/10 and 1/20th of maxPages		
 	private static final int PRIORITY = 5;//setting high increases performance(sometimes) but may lock up computer. Set between 1(lowest) and 10(max)
 	private static final boolean CLEAN = false;// Whether or not to clear out all written files when done
-	private static final boolean SAVE_CONTENT = true;//to download files
 	private static final boolean LIMIT_DOMAIN = false;//limit the crawler to one page per domain
 	private static final boolean SAVE_LINKS = true;//Save URLs and emails to text file
+	private static final boolean SAVE_CONTENT = true;//to download files
+	private static final boolean SAVE_JS = false;//to save embedded java script or not
 	private static final boolean SAVE_IMAGES = true;//to save found imgs
 	private static final boolean QUIET = false;//to hide small errors
 	private static final int MAX_FILES = 10;//max number of files allowed to be downloaded, -1 for inf
@@ -39,6 +40,7 @@ public class SpiderSpawner {
 			SpiderLeg.maxFiles(MAX_FILES);//content settings
 			SpiderLeg.saveContent(SAVE_CONTENT);
 			SpiderLeg.savePics(SAVE_IMAGES);
+			SpiderLeg.saveJS = SAVE_JS;
 			Spider.setMax(MAX_PAGES);
 			Spider.updateQUIET(QUIET);
 			Spider.doDomainSearch = LIMIT_DOMAIN;//crawler settings
@@ -56,7 +58,8 @@ public class SpiderSpawner {
 
 		for(int x = 0;x<spiderArmy.size();x++){//starts all the threads
 			Spider jock = spiderArmy.get(x);
-			if(!QUIET) logger.info("Starting: " + jock.name);
+			if(!QUIET){
+				logger.info("Starting: " + jock.name);}
 			jock.start();
 			jock.getT().setPriority(PRIORITY);
 			while (Spider.pagesToVisitSize() <= x*2 && Spider.pagesToVisitSize() != 0) {
@@ -119,6 +122,13 @@ public class SpiderSpawner {
 			File[] files2 = folder2.listFiles();
 			if (files2 != null) { /// checks to make sure folder is there
 				for (File f : files2) {
+					f.delete();
+				}
+			}
+			File folder3 = new File("output/js");//clean files
+			File[] files3 = folder3.listFiles();
+			if (files3 != null) { /// checks to make sure folder is there
+				for (File f : files3) {
 					f.delete();
 				}
 			}
