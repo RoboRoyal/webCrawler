@@ -5,17 +5,11 @@
 #https://example.com
 
 
-https://jira.blu
-https://bvtrac.blu
-https://bitbucket.blu
-https://confluence.blu/
-
-
 #These are some good ones to start out with:
-#https://what-if.xkcd.com/150/
-#https://what-if.xkcd.com/20/
-#https://what-if.xkcd.com/2/
-#https://what-if.xkcd.com/50/
+https://what-if.xkcd.com/150/
+https://what-if.xkcd.com/20/
+https://what-if.xkcd.com/2/
+https://what-if.xkcd.com/50/
 
 
 #These are good to get lots of downloads:
