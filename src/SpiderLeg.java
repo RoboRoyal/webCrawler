@@ -15,11 +15,11 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class SpiderLeg {
-  private static boolean getContent = true;
+  public static boolean getContent = false;
   private static boolean savePics = true;
-  public static int filesDownloaded = 0;//max number of files to be downloaded, when limit is met will stop downloading pictures too
-  private static final int MAX_FILES = 10;//max number of files allowed to be downloaded, -1 for no limit
-  private static Logger logger = Logger.getLogger(SpiderLeg.class.getCanonicalName());
+  static int filesDownloaded = 0;
+  private static final int MAX_FILES = 100;//max number of files allowed to be downloaded
+  private static Logger logger = Logger.getLogger(Spider.class.getCanonicalName());
 
   private static final String USER_AGENT =
       "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";// pretend we are using a browser																																							// browser
@@ -36,7 +36,7 @@ public class SpiderLeg {
   public boolean crawl(String url) {
     try {
       Connection connection = Jsoup.connect(url).userAgent(USER_AGENT);// Connects to web pages
-      connection.timeout(8112);
+      connection.timeout(16000);
       Document htmlDocument = connection.get();// get contents of web page
 
       if (!connection.response().contentType().contains("text/html")) {// print out if connection failed
@@ -48,7 +48,7 @@ public class SpiderLeg {
         this.links.add(link.absUrl("href"));// save all links in the list
       }
       try {
-        if (getContent && (filesDownloaded < MAX_FILES || MAX_FILES == -1) ) {
+        if (getContent && filesDownloaded <= MAX_FILES ) {
           getContent(htmlDocument);
         }
       } catch (Exception t) {
@@ -82,20 +82,18 @@ public class SpiderLeg {
     for (Element link : linksOnPage) {
       String matchingFiles =
           " msi| zip| rar| tar| pdf| lnk| swf| exe| dll| jar| pdf| apk| dmg| xls| xlsm| xlsx| ppt| pptm| pptx| rtf| doc| docm| docx| bmp| bitmap| gif| dos| bat";//cant do .com files
-      //matchingFiles = " [^b]\\w+";//use this if you want to download file types that hector can't check on blu netowrk
-      //matchingFiles = "(?! com| net| org| gov| info| biz| top| io| blu| edu).{3-4}";//use this if you want to download file types that hector can't check on Internet
-      //matchingFiles = " mp4| mp3| webm| avi| wmv| mpeg4| flv| flac"//video and audio files only
+      //matchingFiles = " [^b]\\w+";--use this if you want to download file types that hector cant check
+      matchingFiles = " mp4| mp3| webm| avi| wmv| mpeg4| flv";
       if (link.absUrl("href").replaceAll(".*\\.", " ").replaceAll("/.*", " ").matches(matchingFiles)) {
-    	filesDownloaded++;
+    	  filesDownloaded++;
         file((new URL(link.absUrl("href").toString())),
-            "output/files/doc_" + System.currentTimeMillis()//+ link.absUrl("href").toString().replaceAll(".*//", " ").replaceAll("/.*", " ").replaceAll("\\.", "_")
+            "output/files/doc_" + System.currentTimeMillis()
                 + link.absUrl("href").toString().replaceAll(".*\\.", " ").replaceAll("/.*", " ").replaceFirst(" ", "."));
       }
     }
 
     if (!htmlDocument.getElementsByAttribute("download").isEmpty()) {//checks if there is downloadable content
       for (Element doc : htmlDocument.getElementsByAttribute("download")) {
-    	filesDownloaded++;
         String docLocation = doc.absUrl("src");
         URL url2 = new URL(docLocation);
         String fileLocation = "output/files/doc_";
@@ -110,25 +108,31 @@ public class SpiderLeg {
             out.write(b);
           }
           file(url2, fileLocation);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
       }
     }
     if (savePics && !htmlDocument.getElementsByTag("img").isEmpty()) {//checks for downloadable images
-      for (Element img : htmlDocument.getElementsByTag("img")) {
-        String imageLocation = img.absUrl("src");
-        URL url2 = new URL(imageLocation);
-        InputStream in = url2.openStream();
-        OutputStream out =
-            new BufferedOutputStream(new FileOutputStream("output/imgs/img_"
-                + System.currentTimeMillis()));
-        for (int b; (b = in.read()) != -1;) {
-          out.write(b);
+        for (Element img : htmlDocument.getElementsByTag("img")) {
+          String imageLocation = img.absUrl("src");
+          String extention = img.absUrl("src").toString().replaceAll(".*\\.", " ").replaceAll("/.*", " ").replaceFirst(" ", ".").replaceFirst("%.*", " ");
+          URL url2 = new URL(imageLocation);
+          extention = extention.replaceAll("\\?.*", " ");
+          InputStream in = url2.openStream();
+          if (!extention.matches(".com.*|.main.*|.org.*|.title.*|.tv.*|.cms.*")) {//filter out bad extentions
+        	  OutputStream out =
+                      new BufferedOutputStream(new FileOutputStream("output/imgs/img_"
+                          + System.currentTimeMillis()+extention));
+                  for (int b; (b = in.read()) != -1;) {
+                    out.write(b);
+                  }
+                  out.close();
+                  in.close();
+                 
+          }
         }
-        out.close();
-        in.close();
       }
-    }
-  }
+ }
 
   /**
    * This method connects to and downloads documents acting as a normal user
