@@ -13,7 +13,7 @@ import org.apache.log4j.Logger;
 
 
 public class SpiderTamer {
-  private static Logger logger = Logger.getLogger(SpiderTamer.class.getCanonicalName());
+  private static Logger logger = Logger.getLogger(Spider.class.getCanonicalName());
 
   private SpiderTamer() {}
 
@@ -85,9 +85,12 @@ public class SpiderTamer {
           .replaceFirst("\\]", " ").replaceFirst("\\[", " "));
 
       //write emailsFound
-      logger.info("Attempting to write " + emails.size() + " emails to file...");
-      spiderJocky2.write(emails.toString().replaceFirst("\\]", " ").replaceAll(",", "\n")
-          .replaceFirst("\\[", " "));
+      int emailCount =  emails.size();
+      if(emailCount > 0){
+          logger.info("Attempting to write " + emailCount + " emails to file...");
+          spiderJocky2.write(emails.toString().replaceFirst("\\]", " ").replaceAll(",", "\n")
+              .replaceFirst("\\[", " "));
+      }
     } catch (IOException e) {
       logger.error("Problem writing to file: " + e.getMessage(), e);
       return false;
@@ -113,8 +116,7 @@ public class SpiderTamer {
         }
       }
     } catch (IOException e) {
-      logger.error("Problem reading from '" + urlFile + ": " + e.getMessage());
+      logger.error("Problem reading from " + urlFile + ": " + e.getMessage());
     }
   }
-
 }
