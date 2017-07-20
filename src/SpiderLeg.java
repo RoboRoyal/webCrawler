@@ -20,12 +20,14 @@ public class SpiderLeg {
   private static int filesDownloaded = 0;//max number of files to be downloaded, when limit is met will stop downloading pictures too
   private static int maxFiles = 10;//max number of files allowed to be downloaded, -1 for no limit
   private static boolean quiet = false;//to hide small errors
+  public static boolean saveJS = true;
   private static Logger logger = Logger.getLogger(SpiderLeg.class.getCanonicalName());
 
   private static final String USER_AGENT =
       "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";// pretend we are using a browser																																							// browser
 
   private List<String> links = new LinkedList<>();
+
 
   /**
    * This method is what actually crawls individual websites
@@ -65,7 +67,23 @@ public class SpiderLeg {
     return true;
   }
 
-  /**
+  private void saveJS(String page) {
+	String temp = page;
+	do{
+		temp = temp.replaceAll("\n","!@#@!").replaceFirst(".*<script>", " ").replaceFirst("</script>.*", " ").replaceAll("!@#@!","\n");
+		saveMe(temp);
+		//logger.info(temp);
+	}while(temp.contains("<script>"));
+	
+}
+  private void saveMe(String js){
+	  try (OutputStream out =new BufferedOutputStream(new FileOutputStream("output/js/js_"
+	                    + System.currentTimeMillis()+".js"))) {
+		  out.write(js.getBytes());
+	  }catch(Exception e){logger.trace(e);}
+  }
+
+/**
    * This method gets the links from the page most recently crawled
    *
    * @return List<String> The links from the last paged
@@ -81,11 +99,15 @@ public class SpiderLeg {
    * @return void
    */
   private void getContent(Document htmlDocument) throws IOException {
+	  if(saveJS && htmlDocument.body().toString().toLowerCase().contains("<script>")){
+    	  logger.info("Found js!!");
+    	  saveJS(htmlDocument.body().toString().toLowerCase());
+      }
 
     Elements linksOnPage = htmlDocument.select("a[href]");// get all links from web page
     for (Element link : linksOnPage) {
       String matchingFiles =
-          " msi| zip| rar| tar| pdf| lnk| swf| exe| dll| jar| pdf| apk| dmg| xls| xlsm| xlsx| ppt| pptm| pptx| rtf| doc| docm| docx| bmp| bitmap| gif| dos| bat";//cant do .com files
+          " msi| zip| rar| tar| pdf| lnk| swf| exe| dll| jar| pdf| apk| dmg| xls| xlsm| xlsx| ppt| pptm| pptx| rtf| doc| docm| docx| bmp| bitmap| gif| dos| bat| js";//cant do .com files
       //matchingFiles = " [^b]\\w+";//use this if you want to download file types that hector can't check on blu netowrk
       //matchingFiles = "(?! com| net| org| gov| info| biz| top| io| blu| edu| php| ru| html| biz| us| io| top| xxx| win| me| tv)";//use this if you want to download file types that hector can't check on Internet
       //matchingFiles = " mp4| mp3| webm| avi| wmv| mpeg4| flv| flac"//video and audio files only
