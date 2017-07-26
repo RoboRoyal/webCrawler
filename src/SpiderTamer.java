@@ -8,9 +8,7 @@ import java.io.Writer;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
-
 import org.apache.log4j.Logger;
-
 
 public class SpiderTamer {
   private static Logger logger = Logger.getLogger(SpiderTamer.class.getCanonicalName());
@@ -21,7 +19,6 @@ public class SpiderTamer {
    * This method gets the URLs/domains from black.txt and add them to the black list
    *
    * @param p The spider to change
-   * @return void
    */
   public static void fileBlack(Spider p) {
     String blackFile = "Fileconfig/black.txt";
@@ -42,7 +39,6 @@ public class SpiderTamer {
    * This method gets the URLs/domains from white.txt and add them to the white list
    *
    * @param p The spider to change
-   * @return void
    */
   public static void fileWhite(Spider p) {
     String whiteFile = "Fileconfig/white.txt";
@@ -103,7 +99,6 @@ public class SpiderTamer {
    * This method gets the URLs from linksToCrawl and adds them to the list of links to be crawled
    *
    * @param p The spider to add links to
-   * @return void
    */
   public static void fileAddLinks(Spider p) {
     String urlFile = "Fileconfig/linksToCrawl.txt";
