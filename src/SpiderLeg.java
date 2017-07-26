@@ -15,7 +15,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class SpiderLeg {
-  private static boolean getContent = true;//wether or not to download anything from the sites
+  private static boolean getContent = true;//Whether or not to download anything from the sites
   private static boolean savePics = true;//will download pictures only if getConent is also set to true
   private static int filesDownloaded = 0;//max number of files to be downloaded, when limit is met will stop downloading pictures too
   private static int maxFiles = 10;//max number of files allowed to be downloaded, -1 for no limit
@@ -24,7 +24,8 @@ public class SpiderLeg {
   private static Logger logger = Logger.getLogger(SpiderLeg.class.getCanonicalName());
 
   private static final String USER_AGENT =
-      "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";// pretend we are using a browser																																							// browser
+  //    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";// pretend we are using a browser	
+  "duckbot/1.0.3 ";
 
   private List<String> links = new LinkedList<>();
 
@@ -44,7 +45,7 @@ public class SpiderLeg {
 
       if (!connection.response().contentType().contains("text/html")) {// print out if connection failed
         if(!quiet){
-        	logger.warn("**Failure** Retrieved something other than HTML");}
+        	logger.trace("**Failure** Retrieved something other than HTML");}
         return false;
       }
       Elements linksOnPage = htmlDocument.select("a[href]");// get all links from web page
@@ -67,15 +68,22 @@ public class SpiderLeg {
     return true;
   }
 
+  /**
+   * Parses out the html document to find the java script
+   * 
+   * @param page the HTML document for the web page
+   */
   private void saveJS(String page) {
 	String temp = page;
 	do{
-		temp = temp.replaceAll("\n","!@#@!").replaceFirst(".*<script>", " ").replaceFirst("</script>.*", " ").replaceAll("!@#@!","\n");
+		temp = temp.replaceAll("\n","asdfQ").replaceFirst(".*<script>"," ").replaceFirst("</script>.*"," ").replaceAll("asdfQ","\n");
 		saveMe(temp);
-		//logger.info(temp);
-	}while(temp.contains("<script>"));
-	
-}
+	}while(temp.contains("<script>"));	
+  }
+  /**
+   * Takes the extracted java script and saves in as a .js file
+   * @param js The string containing javascript
+   */
   private void saveMe(String js){
 	  try (OutputStream out =new BufferedOutputStream(new FileOutputStream("output/js/js_"
 	                    + System.currentTimeMillis()+".js"))) {
@@ -100,14 +108,13 @@ public class SpiderLeg {
    */
   private void getContent(Document htmlDocument) throws IOException {
 	  if(saveJS && htmlDocument.body().toString().toLowerCase().contains("<script>")){
-    	  logger.info("Found js!!");
     	  saveJS(htmlDocument.body().toString().toLowerCase());
       }
 
     Elements linksOnPage = htmlDocument.select("a[href]");// get all links from web page
     for (Element link : linksOnPage) {
       String matchingFiles =
-          " msi| zip| rar| tar| pdf| lnk| swf| exe| dll| jar| pdf| apk| dmg| xls| xlsm| xlsx| ppt| pptm| pptx| rtf| doc| docm| docx| bmp| bitmap| gif| dos| bat| js";//cant do .com files
+          " msi| zip| rar| tar| pdf| lnk| swf| exe| dll| jar| pdf| apk| dmg| xls| xlsm| xlsx| ppt| pptm| pptx| rtf| doc| docm| docx| bmp| bitmap| gif| dos| bat";//cant do .com files
       //matchingFiles = " [^b]\\w+";//use this if you want to download file types that hector can't check on blu netowrk
       //matchingFiles = "(?! com| net| org| gov| info| biz| top| io| blu| edu| php| ru| html| biz| us| io| top| xxx| win| me| tv)";//use this if you want to download file types that hector can't check on Internet
       //matchingFiles = " mp4| mp3| webm| avi| wmv| mpeg4| flv| flac"//video and audio files only
@@ -141,27 +148,27 @@ public class SpiderLeg {
       }
     }
     if (savePics && !htmlDocument.getElementsByTag("img").isEmpty()) {//checks for downloadable images
-        for (Element img : htmlDocument.getElementsByTag("img")) {
-          String imageLocation = img.absUrl("src");
-          String extention = img.absUrl("src").replaceAll(".*\\.", " ").replaceAll("/.*", " ").replaceFirst(" ", ".").replaceFirst("%.*", " ");
-          URL url2 = new URL(imageLocation);
-          extention = extention.replaceAll("\\?.*", " ");
-          InputStream in = url2.openStream();
-          imageLocation = imageLocation.replaceAll(".*//", " ").replaceAll("/.*", " ").replaceAll(" ", "_").replaceAll("\\.", "_");
-          if (!extention.matches(".com.*|.main.*|.org.*|.title.*|.tv.*|.cms.*")) {//filter out bad extentions
-        	  OutputStream out =
-                      new BufferedOutputStream(new FileOutputStream("output/imgs/img"
-                    		  +imageLocation+ System.currentTimeMillis()+extention));
-                  for (int b; (b = in.read()) != -1;) {
-                    out.write(b);
-                  }
-                  out.close();
-                  in.close();  
-          }
-        }
-      }
-    
-  }
+			for (Element img : htmlDocument.getElementsByTag("img")) {
+				String imageLocation = img.absUrl("src");
+				String extention = img.absUrl("src").replaceAll(".*\\.", " ").replaceAll("/.*", " ")
+						.replaceFirst(" ", ".").replaceFirst("%.*", " ").replaceAll("\\?.*", " ");
+            if (!extention.matches(".com.*|.main.*|.org.*|.title.*|.tv.*|.cms.*")) {//filter out bad extentions
+					URL url2 = new URL(imageLocation);
+					InputStream in = url2.openStream();
+					imageLocation = imageLocation.replaceAll(".*//", " ").replaceAll("/.*", " ").replaceAll(" ", "_")
+							.replaceAll("\\.", "_");
+					OutputStream out = new BufferedOutputStream(new FileOutputStream(
+							"output/imgs/img" + imageLocation + System.currentTimeMillis() + extention));
+					for (int b; (b = in.read()) != -1;) {
+						out.write(b);
+					}
+					out.close();
+					in.close();
+				}
+			}
+		}
+
+	}
 
   /**
    * This method connects to and downloads documents acting as a normal user
@@ -196,6 +203,7 @@ public class SpiderLeg {
       logger.trace(e);
     }
   }
+  
   /**
    * This method sets the maximum number of files allowed to be downloaded
    * @param newMaxFiles
@@ -204,6 +212,7 @@ public class SpiderLeg {
   public static void maxFiles(int newMaxFiles) {
 	maxFiles = newMaxFiles;
   }
+  
   /**
    * This method sets if files are to be downloaded
    * @param saveContent
@@ -212,6 +221,7 @@ public class SpiderLeg {
   public static void saveContent(boolean saveContent) {
 	getContent = saveContent;
   }
+  
   /**
    * This method sets if pictures are to be saved
    * @param saveImages
@@ -220,6 +230,7 @@ public class SpiderLeg {
   public static void savePics(boolean saveImages) {
 	savePics = saveImages;
   }
+  
   /**
    * This method returns the number of files that have been downloaded
    * @return filesDownloaded
@@ -227,6 +238,7 @@ public class SpiderLeg {
   public static int filesDownloaded() {
 	return filesDownloaded;
   }
+  
   /**
    * This method sets if to hide errors
    * @param boolean updates status
