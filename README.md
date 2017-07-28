@@ -6,6 +6,7 @@ black list, used by defualt
 start links in 'linksToCrawl.txt'
 outputs to 'crawledURLS.txt'
 Also puts emails found into a file called 'foundEmails.txt'
+Can be used to download files, embeded images, and embeded javascript
 
 
 Can be imported into elcipse as existing Maven project
