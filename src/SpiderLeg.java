@@ -117,7 +117,6 @@ public class SpiderLeg {
     for (Element link : linksOnPage) {
       String matchingFiles =
           " msi| zip| rar| tar| pdf| lnk| swf| exe| dll| jar| pdf| apk| dmg| xls| xlsm| xlsx| ppt| pptm| pptx| rtf| doc| docm| docx| bmp| bitmap| gif| dos| bat";//cant do .com files
-      //matchingFiles = " [^b]\\w+";//use this if you want to download file types that hector can't check on blu netowrk
       //matchingFiles = "(?! com| net| org| gov| info| biz| top| io| blu| edu| php| ru| html| biz| us| io| top| xxx| win| me| tv)";//use this if you want to download file types that hector can't check on Internet
       //matchingFiles = " mp4| mp3| webm| avi| wmv| mpeg4| flv| flac"//video and audio files only
       if (link.absUrl("href").replaceAll(".*\\.", " ").replaceAll("/.*", " ").matches(matchingFiles)) {
