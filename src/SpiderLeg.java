@@ -73,19 +73,23 @@ public class SpiderLeg {
    * 
    * @param page the HTML document for the web page
    */
-  private void saveJS(String page) {
-	String temp = page;
+  private void saveJS(String page, String url) {
+	String temp;
+	if(url == null){
+		  url="_";}
 	do{
-		temp = temp.replaceAll("\n","asdfQ").replaceFirst(".*<script>"," ").replaceFirst("</script>.*"," ").replaceAll("asdfQ","\n");
-		saveMe(temp);
-	}while(temp.contains("<script>"));	
+		temp = page;
+		temp = temp.replaceAll("\n|\r","asdfQT").replaceFirst(".*<script>"," ").replaceFirst("<\\/script>.*"," ").replaceAll("asdfQT","\n");
+		saveMe(temp, url);
+		page = page.replaceAll("\n|\r","asdfQT").replaceFirst(".*<\\/script>"," ").replaceAll("asdfQT","\n"); 
+	}while(page.contains("<script>"));	
   }
   /**
    * Takes the extracted java script and saves in as a .js file
    * @param js The string containing javascript
    */
-  private void saveMe(String js){
-	  try (OutputStream out =new BufferedOutputStream(new FileOutputStream("output/js/js_"
+  private void saveMe(String js, String url){
+	  try (OutputStream out =new BufferedOutputStream(new FileOutputStream("output/js/js"+url
 	                    + System.currentTimeMillis()+".js"))) {
 		  out.write(js.getBytes());
 	  }catch(Exception e){logger.trace(e);}
@@ -107,9 +111,7 @@ public class SpiderLeg {
    * @return void
    */
   private void getContent(Document htmlDocument) throws IOException {
-	  if(saveJS && htmlDocument.body().toString().toLowerCase().contains("<script>")){
-    	  saveJS(htmlDocument.body().toString().toLowerCase());
-      }
+	  
 
     Elements linksOnPage = htmlDocument.select("a[href]");// get all links from web page
     for (Element link : linksOnPage) {
@@ -147,9 +149,10 @@ public class SpiderLeg {
         } catch (Exception e) {logger.trace(e);}
       }
     }
+    String imageLocation = null;
     if (savePics && !htmlDocument.getElementsByTag("img").isEmpty()) {//checks for downloadable images
 			for (Element img : htmlDocument.getElementsByTag("img")) {
-				String imageLocation = img.absUrl("src");
+				imageLocation = img.absUrl("src");
 				String extention = img.absUrl("src").replaceAll(".*\\.", " ").replaceAll("/.*", " ")
 						.replaceFirst(" ", ".").replaceFirst("%.*", " ").replaceAll("\\?.*", " ");
             if (!extention.matches(".com.*|.main.*|.org.*|.title.*|.tv.*|.cms.*")) {//filter out bad extentions
@@ -167,6 +170,9 @@ public class SpiderLeg {
 				}
 			}
 		}
+    if(saveJS && htmlDocument.body().toString().toLowerCase().contains("<script>")){
+  	  saveJS(htmlDocument.body().toString().toLowerCase(), imageLocation);
+    }
 
 	}
 
