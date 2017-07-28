@@ -10,17 +10,17 @@ import org.apache.log4j.Logger;
  * @author Dakota Abernathy
  * @version 1.0.3
  * @since 2017-07-06
- */
+ */	
 public class SpiderSpawner {
 
-	private static int MAX_PAGES = 10;// max number of pages to crawl(normally ends up scanning max number of pages)
-	private static  int NUMBER_OF_THREADS = 0;// Recommended between 1/10 and 1/20th of maxPages		
+	private static int MAX_PAGES = 50;// max number of pages to crawl(normally ends up scanning max number of pages)
+	private static  int NUMBER_OF_THREADS = 2;// Recommended between 1/10 and 1/20th of maxPages		
 	private static final int PRIORITY = 5;//setting high increases performance(sometimes) but may lock up computer. Set between 1(lowest) and 10(max)
 	private static boolean CLEAN = true;// Whether or not to clear out all written files when done
 	private static boolean LIMIT_DOMAIN = false;//limit the crawler to one page per domain
 	private static final boolean SAVE_LINKS = true;//Save URLs and emails to text file
-	private static boolean SAVE_CONTENT = false;//to download files
-	private static boolean SAVE_JS = false;//to save embedded java script or not
+	private static boolean SAVE_CONTENT = true;//to download files
+	private static boolean SAVE_JS = true;//to save embedded java script or not
 	private static boolean SAVE_IMAGES = false;//to save found imgs
 	private static final boolean QUIET = false;//to hide small errors
 	private static int MAX_FILES = 10;//max number of files allowed to be downloaded, -1 for inf
@@ -94,7 +94,7 @@ public class SpiderSpawner {
 		int last = 0;
 		int prog;
 		do{
-			try {//waits until crawl is compleat or there are no pages left to crawl
+			try {//waits until crawl is complete or there are no pages left to crawl
 				Thread.sleep(1080);//GTX
 			} catch (Exception e) {logger.trace(e);}
 			pagesSoFar = spiderArmy.get(0).getPagesVisited().size();
@@ -160,10 +160,10 @@ public class SpiderSpawner {
 		} catch (Exception e) {
 			logger.error("Problem deleting files: "+e);
 		}
-		if(del == 0){
-			logger.info("Deleteted "+del+ " files");
+		if(del != 0){
+			logger.info("Deleteted "+del+ " files/pics/js");
 		}else{
-			logger.info("No files to delete files");
+			logger.info("No files to delete");
 		}
 	}
 	/**
@@ -171,7 +171,7 @@ public class SpiderSpawner {
 	 *
 	 * @param arg Passed in arguments from command line
 	 */
-	private static void parse(String[] arg) throws Exception{
+	private static void parse(String[] arg){
 		for(int x = 0;x<arg.length;x+=2){
 			switch(arg[x]){
 			case"-p":
@@ -199,7 +199,7 @@ public class SpiderSpawner {
 				SAVE_IMAGES = arg[x+1].equals("true");
 				break;
 			default:
-				throw new Exception("Invalid statment");
+				throw new IllegalArgumentException("Invalid statment");
 			}
 		}
 	}
