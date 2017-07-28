@@ -96,7 +96,7 @@
     </plugins>
   </build>
   <groupId>blu.WebCrawlerA</groupId>
-  <version>1.02</version>
+  <version>1.0.3</version>
   <organization>
   	<name>BluVector</name>
   </organization>
