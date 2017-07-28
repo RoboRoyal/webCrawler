@@ -7,7 +7,6 @@
 .ru
 .top
 .xyz
-.info
 .onion
 .win
 .biz
@@ -23,8 +22,8 @@ wikipedia.
 http://
 
 #These sites are just to block external sites when offline
-#.net
-#.org
-#.com
-#.gov
-#.edu
+.net
+.org
+.com
+.gov
+.edu
