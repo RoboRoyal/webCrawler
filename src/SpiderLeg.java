@@ -20,12 +20,13 @@ public class SpiderLeg {
   private static int filesDownloaded = 0;//max number of files to be downloaded, when limit is met will stop downloading pictures too
   private static int maxFiles = 10;//max number of files allowed to be downloaded, -1 for no limit
   private static boolean quiet = false;//to hide small errors
-  public static boolean saveJS = true;
+  protected static boolean saveJS = true;
   private static Logger logger = Logger.getLogger(SpiderLeg.class.getCanonicalName());
 
   private static final String USER_AGENT =
-  //    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";// pretend we are using a browser	
-  "duckbot/1.0.3 ";
+  //    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";// pretend we are using a browser	
+  //"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/603.1 (KHTML, like Gecko) Version/10.0 Safari/603.1";
+  "Mozilla/5.0 (compatible; Duckbot/1.0.3; Sorry for crawling your site)";
 
   private List<String> links = new LinkedList<>();
 
@@ -112,22 +113,22 @@ public class SpiderLeg {
    */
   private void getContent(Document htmlDocument) throws IOException {
 	  
-
     Elements linksOnPage = htmlDocument.select("a[href]");// get all links from web page
     for (Element link : linksOnPage) {
       String matchingFiles =
           " msi| zip| rar| tar| pdf| lnk| swf| exe| dll| jar| pdf| apk| dmg| xls| xlsm| xlsx| ppt| pptm| pptx| rtf| doc| docm| docx| bmp| bitmap| gif| dos| bat";//cant do .com files
+      //matchingFiles = " [^b]\\w+";//use this if you want to download file types that hector can't check on blu netowrk
       //matchingFiles = "(?! com| net| org| gov| info| biz| top| io| blu| edu| php| ru| html| biz| us| io| top| xxx| win| me| tv)";//use this if you want to download file types that hector can't check on Internet
       //matchingFiles = " mp4| mp3| webm| avi| wmv| mpeg4| flv| flac"//video and audio files only
       if (link.absUrl("href").replaceAll(".*\\.", " ").replaceAll("/.*", " ").matches(matchingFiles)) {
           String location = link.absUrl("href").replaceAll(".*//", " ").replaceAll("/.*", " ").replaceAll(" ", "_").replaceAll("\\.", "_");
     	filesDownloaded++;
-        file(new URL(link.absUrl("href").toString()),
+        file(new URL(link.absUrl("href")),
             "output/files/doc" +location + System.currentTimeMillis()
                 + link.absUrl("href").replaceAll(".*\\.", " ").replaceAll("/.*", " ").replaceFirst(" ", "."));
       }
     }
-
+    /*
     if (!htmlDocument.getElementsByAttribute("download").isEmpty()) {//checks if there is downloadable content
       for (Element doc : htmlDocument.getElementsByAttribute("download")) {
     	filesDownloaded++;
@@ -147,9 +148,9 @@ public class SpiderLeg {
           file(url2, fileLocation);
         } catch (Exception e) {logger.trace(e);}
       }
-    }
+    }*/
     String imageLocation = null;
-    if (savePics && !htmlDocument.getElementsByTag("img").isEmpty()) {//checks for downloadable images
+    if (savePics){// && !htmlDocument.getElementsByTag("img").isEmpty()) {//checks for downloadable images
 			for (Element img : htmlDocument.getElementsByTag("img")) {
 				imageLocation = img.absUrl("src");
 				String extention = img.absUrl("src").replaceAll(".*\\.", " ").replaceAll("/.*", " ")
@@ -173,7 +174,7 @@ public class SpiderLeg {
   	  saveJS(htmlDocument.body().toString().toLowerCase(), imageLocation);
     }
 
-	}
+  }
 
   /**
    * This method connects to and downloads documents acting as a normal user
