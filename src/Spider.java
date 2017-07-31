@@ -58,7 +58,9 @@ public class Spider implements Runnable {
   }
 
   /**
-   * Primary crawling method
+   * Primary crawling method to initiate web crawl
+   * Makes calls to find next URLs to crawl
+   * Saves new links
    */
   private void crawlInternet() {
 		while (pagesVisited.size() < maxPages && run) {
@@ -71,27 +73,42 @@ public class Spider implements Runnable {
 				currentURL = getNextURL();
 			}
 			if (leg.crawl(currentURL)) {
-				try {
-					for (String newURL : leg.getLinks()) {// try to add only new links
-						if (!pagesToVisit.contains(newURL)) {
-							pagesToVisit.add(newURL);
-						}
-					}
-				} catch (Exception k) {
-					try {
-						Thread.sleep(12);
-					} catch (Exception e) {
-						logger.trace(e);}
-					if (!quiet) {
-						logger.error("Problem adding links on thread: " + this.name + ": " + k);}
-					pagesToVisit.addAll(leg.getLinks());// force add all links
-				}
+					if(pagesToVisit.size()<((maxPages-pagesVisited.size()+1)*1.1)){
+						logger.info("new");
+						addNewUrl(leg);}
 				success++;
 			} else {
 				problems++;
 			}
 		}
 	}
+  
+  private void addNewUrl(SpiderLeg leg){
+	  List<String> tmp = leg.getLinks();
+	  for(int x=0;x<tmp.size();x++){
+		  for(int y=x;y<tmp.size();y++){
+			  if(tmp.get(x)==tmp.get(y)){
+				  tmp.remove(x);
+			  }
+		  }
+	  }
+		try {
+			for (String newURL : tmp) {// try to add only new links
+				if (!pagesToVisit.contains(newURL)) {
+					pagesToVisit.add(newURL);
+				}
+			}
+			//pagesToVisit.addAll(tmp);
+		} catch (Exception k) {
+			try {
+				Thread.sleep(12);
+			} catch (Exception e) {
+				logger.trace(e);}
+			if (!quiet) {
+				logger.error("Problem adding links on thread: " + this.name + ": " + k);}
+			pagesToVisit.addAll(tmp);// force add all links
+		}
+  }
 
   /**
    * This method returns if the given URL is bad using the black list
@@ -263,6 +280,7 @@ public class Spider implements Runnable {
       }
     } catch (Exception dlv) {
       logger.error("Problem in thread: " + this.name + "; Error: " + dlv);
+      dlv.printStackTrace();
       logger.info("Attempting to restart thread: " + this.name + "...");
       run();
     }
