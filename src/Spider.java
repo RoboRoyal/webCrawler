@@ -3,6 +3,7 @@ package spiders;
 import java.util.*;
 import org.apache.log4j.Logger;
 import org.w3c.dom.events.EventException;
+import com.google.common.hash.*;
 
 public class Spider implements Runnable {
   private static int maxPages = 20;
@@ -14,6 +15,8 @@ public class Spider implements Runnable {
   public static boolean doDomainSearch = false;
   public static boolean run = true;
   private static Logger logger = Logger.getLogger(Spider.class.getCanonicalName());
+  private static BloomFilter<CharSequence> filter;
+  private static Boolean useFilter = false;
 
   private int problems;
   private int success;
@@ -44,6 +47,8 @@ public class Spider implements Runnable {
       nextURL = Spider.pagesToVisit.remove(0);//get next URL in list
     } while ((black && isBadURL(nextURL)) || (!black && !isGoodURL(nextURL)));//loop through list until we find a good URL
     pagesVisited.add(nextURL);//add new URL to the set we visited
+    if(useFilter){
+    	filter.put(nextURL);}
     return nextURL;
   }
 
@@ -73,8 +78,7 @@ public class Spider implements Runnable {
 				currentURL = getNextURL();
 			}
 			if (leg.crawl(currentURL)) {
-					if(pagesToVisit.size()<((maxPages-pagesVisited.size()+1)*1.1)){
-						logger.info("new");
+					if(pagesToVisit.size()<=((6+maxPages-pagesVisited.size())*1.1)){
 						addNewUrl(leg);}
 				success++;
 			} else {
@@ -83,11 +87,15 @@ public class Spider implements Runnable {
 		}
 	}
   
+  /**
+   * Filters out bad URLs and adds the rest to the list of URLs to be crawled
+   * @param leg
+   */
   private void addNewUrl(SpiderLeg leg){
 	  List<String> tmp = leg.getLinks();
 	  for(int x=0;x<tmp.size();x++){
-		  for(int y=x;y<tmp.size();y++){
-			  if(tmp.get(x)==tmp.get(y)){
+		  for(int y=x+1;y<tmp.size();y++){
+			  if(tmp.get(x).equals(tmp.get(y))){
 				  tmp.remove(x);
 			  }
 		  }
@@ -98,7 +106,6 @@ public class Spider implements Runnable {
 					pagesToVisit.add(newURL);
 				}
 			}
-			//pagesToVisit.addAll(tmp);
 		} catch (Exception k) {
 			try {
 				Thread.sleep(12);
@@ -118,7 +125,9 @@ public class Spider implements Runnable {
    */
   public boolean isBadURL(String url) {
 
-    if (pagesVisited.contains(url)) {//checks if this site has been visited before
+    if ((!useFilter&&pagesVisited.contains(url))||(useFilter&&filter.mightContain(url))) {//checks if this site has been visited before
+	  //if(filter.mightContain(url)){
+	  //if(pagesVisited.contains(url)){
       return true;
     }
     if(url == ""){
@@ -187,6 +196,10 @@ public class Spider implements Runnable {
    */
   public static void setMax(int newMax) {
     maxPages = newMax;
+    if(newMax>8000){
+    	useFilter=true;
+        filter = BloomFilter.create(Funnels.stringFunnel(), newMax);
+    }
   }
 
   /**
@@ -279,8 +292,7 @@ public class Spider implements Runnable {
         throw new EventException((short) 12, "Missed number of pages");
       }
     } catch (Exception dlv) {
-      logger.error("Problem in thread: " + this.name + "; Error: " + dlv);
-      dlv.printStackTrace();
+      logger.error("Problem in thread: " + this.name + "; Error: " , dlv);
       logger.info("Attempting to restart thread: " + this.name + "...");
       run();
     }
