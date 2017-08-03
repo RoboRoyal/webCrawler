@@ -25,11 +25,10 @@ public class SpiderLeg {
 
   private static final String USER_AGENT =
   //    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";// pretend we are using a browser	
-  //"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/603.1 (KHTML, like Gecko) Version/10.0 Safari/603.1";
-  "Mozilla/5.0 (compatible; Duckbot/1.0.3; Sorry for crawling your site)";
+  // "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/603.1 (KHTML, like Gecko) Version/10.0 Safari/603.1";//other
+  "Mozilla/5.0 (compatible; Duckbot/"+SpiderSpawner.getVerion()+"; Sorry for crawling your site)";
 
   private List<String> links = new LinkedList<>();
-
 
   /**
    * This method is what actually crawls individual websites
@@ -41,7 +40,7 @@ public class SpiderLeg {
   public boolean crawl(String url) {
     try {
       Connection connection = Jsoup.connect(url).userAgent(USER_AGENT);// Connects to web pages
-      connection.timeout(8112);
+      connection.timeout(5916);
       Document htmlDocument = connection.get();// get contents of web page
 
       if (!connection.response().contentType().contains("text/html")) {// print out if connection failed
@@ -54,12 +53,12 @@ public class SpiderLeg {
         this.links.add(link.absUrl("href"));// save all links in the list
       }
       try {
-        if (getContent && (filesDownloaded < maxFiles || maxFiles == -1) ) {
-          getContent(htmlDocument);
-        }
+    	  if (getContent && (filesDownloaded < maxFiles || maxFiles == -1) ) {
+              getContent(htmlDocument);
+            }
       } catch (Exception t) {
         if(!quiet){
-        	logger.trace(t);}
+        	logger.error(t);}
       }
     } catch (IOException e) {// error handler
     	if(!quiet){
@@ -79,10 +78,11 @@ public class SpiderLeg {
 	if(url == null){
 		  url="_";}
 	do{
+		String saveSpace = "asdfQT";
 		temp = page;
-		temp = temp.replaceAll("\n|\r","asdfQT").replaceFirst(".*<script>"," ").replaceFirst("<\\/script>.*"," ").replaceAll("asdfQT","\n");
+		temp = temp.replaceAll("\n|\r",saveSpace).replaceFirst(".*<script>"," ").replaceFirst("<\\/script>.*"," ").replaceAll(saveSpace,"\n");
 		saveMe(temp, url);
-		page = page.replaceAll("\n|\r","asdfQT").replaceFirst(".*<\\/script>"," ").replaceAll("asdfQT","\n"); 
+		page = page.replaceAll("\n|\r",saveSpace).replaceFirst(".*<\\/script>"," ").replaceAll(saveSpace,"\n"); 
 	}while(page.contains("<script>"));	
   }
   /**
@@ -116,7 +116,7 @@ public class SpiderLeg {
     Elements linksOnPage = htmlDocument.select("a[href]");// get all links from web page
     for (Element link : linksOnPage) {
       String matchingFiles =
-          " msi| zip| rar| tar| pdf| lnk| swf| exe| dll| jar| pdf| apk| dmg| xls| xlsm| xlsx| ppt| pptm| pptx| rtf| doc| docm| docx| bmp| bitmap| gif| dos| bat";//cant do .com files
+          " msi| zip| rar| tar| pdf| lnk| swf| exe| dll| jar| pdf| apk| dmg| xls| xlsm| xlsx| ppt| pptm| pptx| rtf| doc| docm| docx| bmp| bitmap| gif| dos| bat| ps1";//cant do .com files
       //matchingFiles = " [^b]\\w+";//use this if you want to download file types that hector can't check on blu netowrk
       //matchingFiles = "(?! com| net| org| gov| info| biz| top| io| blu| edu| php| ru| html| biz| us| io| top| xxx| win| me| tv)";//use this if you want to download file types that hector can't check on Internet
       //matchingFiles = " mp4| mp3| webm| avi| wmv| mpeg4| flv| flac"//video and audio files only
@@ -150,12 +150,13 @@ public class SpiderLeg {
       }
     }*/
     String imageLocation = null;
-    if (savePics){// && !htmlDocument.getElementsByTag("img").isEmpty()) {//checks for downloadable images
+		if (savePics) {// && !htmlDocument.getElementsByTag("img").isEmpty())
+						// {//checks for downloadable images
 			for (Element img : htmlDocument.getElementsByTag("img")) {
 				imageLocation = img.absUrl("src");
 				String extention = img.absUrl("src").replaceAll(".*\\.", " ").replaceAll("/.*", " ")
 						.replaceFirst(" ", ".").replaceFirst("%.*", " ").replaceAll("\\?.*", " ");
-            if (!extention.matches(".com.*|.main.*|.org.*|.title.*|.tv.*|.cms.*")) {//filter out bad extentions
+				if (!extention.matches(".com.*|.main.*|.org.*|.title.*|.tv.*|.cms.*")) {// filter out bad extensions
 					URL url2 = new URL(imageLocation);
 					InputStream in = url2.openStream();
 					imageLocation = imageLocation.replaceAll(".*//", " ").replaceAll("/.*", " ").replaceAll(" ", "_")
@@ -174,7 +175,7 @@ public class SpiderLeg {
   	  saveJS(htmlDocument.body().toString().toLowerCase(), imageLocation);
     }
 
-  }
+  }	
 
   /**
    * This method connects to and downloads documents acting as a normal user
