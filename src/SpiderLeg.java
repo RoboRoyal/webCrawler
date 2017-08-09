@@ -1,18 +1,6 @@
 package spiders;
 
 import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.*;
-import org.apache.log4j.Logger;
-import org.jsoup.*;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 public class SpiderLeg {
   private static boolean getContent = true;//Whether or not to download anything from the sites
@@ -21,12 +9,14 @@ public class SpiderLeg {
   private static int maxFiles = 10;//max number of files allowed to be downloaded, -1 for no limit
   private static boolean quiet = false;//to hide small errors
   protected static boolean saveJS = true;
+  private static int maxImgs = 100;//max images per page
+  private int imagesDownloaded = 0;
   private static Logger logger = Logger.getLogger(SpiderLeg.class.getCanonicalName());
 
   private static final String USER_AGENT =
   //    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";// pretend we are using a browser	
   // "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/603.1 (KHTML, like Gecko) Version/10.0 Safari/603.1";//other
-  "Mozilla/5.0 (compatible; Duckbot/"+SpiderSpawner.getVerion()+"; Sorry for crawling your site)";
+  "Mozilla/5.0 (compatible; Duckbot/"+SpiderSpawner.getVerion()+"; Sorry for crawling your site, D.A.)";
 
   private List<String> links = new LinkedList<>();
 
@@ -128,35 +118,16 @@ public class SpiderLeg {
                 + link.absUrl("href").replaceAll(".*\\.", " ").replaceAll("/.*", " ").replaceFirst(" ", "."));
       }
     }
-    /*
-    if (!htmlDocument.getElementsByAttribute("download").isEmpty()) {//checks if there is downloadable content
-      for (Element doc : htmlDocument.getElementsByAttribute("download")) {
-    	filesDownloaded++;
-        String docLocation = doc.absUrl("src");
-        URL url2 = new URL(docLocation);
-        String fileLocation = "output/files/doc_";
-        if (docLocation.contains("pdf")) {
-          fileLocation = "output/pdfs/pdf_";
-        }
-        try (InputStream in = url2.openStream();
-            OutputStream out =
-                new BufferedOutputStream(new FileOutputStream(fileLocation
-                    + System.currentTimeMillis()))) {
-          for (int b; (b = in.read()) != -1;) {//write out data
-            out.write(b);
-          }
-          file(url2, fileLocation);
-        } catch (Exception e) {logger.trace(e);}
-      }
-    }*/
     String imageLocation = null;
+    imagesDownloaded = 0;
 		if (savePics) {// && !htmlDocument.getElementsByTag("img").isEmpty())
 						// {//checks for downloadable images
 			for (Element img : htmlDocument.getElementsByTag("img")) {
+				imagesDownloaded++;
 				imageLocation = img.absUrl("src");
 				String extention = img.absUrl("src").replaceAll(".*\\.", " ").replaceAll("/.*", " ")
 						.replaceFirst(" ", ".").replaceFirst("%.*", " ").replaceAll("\\?.*", " ");
-				if (!extention.matches(".com.*|.main.*|.org.*|.title.*|.tv.*|.cms.*")) {// filter out bad extensions
+				if (!extention.matches(".com.*|.main.*|.org.*|.title.*|.tv.*|.cms.*") && imagesDownloaded<maxImgs) {// filter out bad extensions
 					URL url2 = new URL(imageLocation);
 					InputStream in = url2.openStream();
 					imageLocation = imageLocation.replaceAll(".*//", " ").replaceAll("/.*", " ").replaceAll(" ", "_")
@@ -174,7 +145,6 @@ public class SpiderLeg {
     if(saveJS && htmlDocument.body().toString().toLowerCase().contains("<script>")){
   	  saveJS(htmlDocument.body().toString().toLowerCase(), imageLocation);
     }
-
   }	
 
   /**
@@ -214,7 +184,6 @@ public class SpiderLeg {
   /**
    * This method sets the maximum number of files allowed to be downloaded
    * @param newMaxFiles
-   * @return void
    */
   public static void maxFiles(int newMaxFiles) {
 	maxFiles = newMaxFiles;
@@ -223,7 +192,6 @@ public class SpiderLeg {
   /**
    * This method sets if files are to be downloaded
    * @param saveContent
-   * @return void
    */
   public static void saveContent(boolean saveContent) {
 	getContent = saveContent;
@@ -232,7 +200,6 @@ public class SpiderLeg {
   /**
    * This method sets if pictures are to be saved
    * @param saveImages
-   * @return void
    */
   public static void savePics(boolean saveImages) {
 	savePics = saveImages;
@@ -249,9 +216,16 @@ public class SpiderLeg {
   /**
    * This method sets if to hide errors
    * @param boolean updates status
-   * @return void
    */
   public static void updateQuiet(boolean updated) {
 	quiet = updated;
+  }
+  /**
+   * sets the max number of images to save per page
+   * Default is 100
+   * @param i max images per page
+   */
+  public static void maxImgs(int i){
+	  maxImgs = i;
   }
 }
