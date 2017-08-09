@@ -125,4 +125,28 @@ public class SpiderTamer {
 			logger.error("Problem reading from '" + urlFile + ": " + e);
 		}
 	}
+
+	/**
+	 * Logs the parameters of the scan into a log file
+	 * 
+	 * @param me
+	 *            the string to add to the log file
+	 */
+	public static void log(String me) {
+		String logFile = "output/logFile.txt";
+		StringBuilder temp = new StringBuilder();
+		try (Scanner in = new Scanner(new File(logFile))) {
+			while (in.hasNextLine()) {
+				temp.append(in.nextLine() + "\n");
+			}
+		} catch (IOException e) {
+			logger.error("Problem reading from: " + e);
+		}
+		try (Writer logOut = new BufferedWriter(new FileWriter(new File(logFile)))) {
+			temp.append(me);
+			logOut.write(temp.toString());
+		} catch (IOException e) {
+			logger.error("Problem reading from: " + e);
+		}
+	}
 }
