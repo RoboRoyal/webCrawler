@@ -11,18 +11,18 @@ public class Spider implements Runnable {
 	private static List<String> pagesToVisit = Collections.synchronizedList(new LinkedList<String>());
 	private static Set<String> blackListDomains = new HashSet<>();
 	private static Set<String> whiteListDomains = new HashSet<>();
-	private static boolean quiet = false;
-	private static boolean doDomainSearch = false;
-	private static boolean runThread = true;
+	private static boolean quiet = false;//to not logg errors or info
+	private static boolean doDomainSearch = false;//limits crawl to one scan per domain
+	private static boolean runThread = true;//to continue of kill thread
 	private static Logger logger = Logger.getLogger(Spider.class.getCanonicalName());
-	private static BloomFilter<CharSequence> filter;
-	private static Boolean useFilter = false;
-	private int restarts = 0;
-	private static int num = 0;
+	private static BloomFilter<CharSequence> filter;//filter for bloom filter
+	private static Boolean useFilter = false;//use bloom filter or brutforce check
+	private int restarts = 0;//how many times the thread has restarted
+	private static int num = 0;//number of threads left
 
 	private static int problems = 0;
 	private static int success = 0;
-	private boolean black = true;
+	private boolean black = true;//use black list or white list
 	private Thread t;
 	String name;
 
@@ -327,13 +327,13 @@ public class Spider implements Runnable {
 			if (restarts <= 10) {
 				restarts++;
 				if (!quiet) {
-					logger.info("Attempting to restart thread: " + this.name + "...");
+					logger.info("Attempting to restart thread: " + this.name+" restart: "+restarts + "...");
 				}
 				run();
 				//if the thread has been restarted more the the max allowed, shut it down
 			}else{
-				logger.info("Thread "+this.name+" is shutting down");
 				num--;
+				logger.info("Thread "+this.name+" is shutting down, "+num+" threads left");
 			}
 		}
 	}
@@ -352,7 +352,6 @@ public class Spider implements Runnable {
 	 * 
 	 * @param boolean
 	 *            updates status
-	 * @return void
 	 */
 	public static void updateQuiet(boolean updated) {
 		quiet = updated;
