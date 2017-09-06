@@ -1,6 +1,19 @@
 package spiders;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.*;
+import org.apache.log4j.Logger;
+import org.jsoup.*;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 public class SpiderLeg {
   private static boolean getContent = true;//Whether or not to download anything from the sites
